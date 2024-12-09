@@ -68,9 +68,11 @@ fn calculate_checksum(space_list: &[Space]) -> usize {
     let mut checksum = 0;
     let mut index = 0;
     for space in space_list {
-        for _ in 0..space.occupied {
-            checksum += space.id.unwrap() * index;
-            index += 1;
+        if let Some(id) = space.id {
+            for _ in 0..space.occupied {
+                checksum += id * index;
+                index += 1;
+            }
         }
         index += space.free;
     }
