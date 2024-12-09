@@ -1,8 +1,14 @@
 //! Types grids
 
-use std::{cmp::Ordering, fmt::Display};
+use std::{
+    cmp::Ordering,
+    fmt::Display,
+    ops::{Add, Sub},
+};
 
-use derive_more::{Add, AddAssign, Constructor, Display as DeriveDisplay, Sub, SubAssign};
+use derive_more::{
+    Add as DeriveAdd, AddAssign, Constructor, Display as DeriveDisplay, Sub as DeriveSub, SubAssign,
+};
 
 /// UCoor2DIndex
 pub type UCoor2DIndex = usize;
@@ -24,8 +30,8 @@ pub type ICoor2D = Coor2DMut<ICoor2DIndex>;
     Debug,
     //    From,
     //    Into,
-    Add,
-    Sub,
+    DeriveAdd,
+    DeriveSub,
     AddAssign,
     SubAssign,
     //    Sum,
@@ -44,6 +50,34 @@ pub struct Coor2DMut<T: Clone + Ord + Eq + Display> {
 impl<T: Clone + Ord + Eq + Display> From<(T, T)> for Coor2DMut<T> {
     fn from(t: (T, T)) -> Self {
         Coor2DMut { x: t.0, y: t.1 }
+    }
+}
+
+impl<T: Clone + Ord + Eq + Display + Add<Output = T>> Add for &Coor2DMut<T>
+where
+    T: Add<Output = T>,
+{
+    type Output = Coor2DMut<T>;
+
+    fn add(self, other: Self) -> Self::Output {
+        Coor2DMut {
+            x: self.x.clone() + other.x.clone(),
+            y: self.y.clone() + other.y.clone(),
+        }
+    }
+}
+
+impl<T: Clone + Ord + Eq + Display + Sub<Output = T>> Sub for &Coor2DMut<T>
+where
+    T: Add<Output = T>,
+{
+    type Output = Coor2DMut<T>;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Coor2DMut {
+            x: self.x.clone() - other.x.clone(),
+            y: self.y.clone() - other.y.clone(),
+        }
     }
 }
 
