@@ -4,170 +4,39 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'day03'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=day03"
-                ],
-                "filter": {
-                    "name": "day03",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'day03_part2'",
+            "name": "Debug executable 'day10_part1'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day03_part2",
-                    "--package=day03"
+                    "--bin=day10_part1",
+                    "--package=day10"
                 ],
                 "filter": {
-                    "name": "day03_part2",
+                    "name": "day10_part1",
                     "kind": "bin"
                 }
             },
             "args": [],
             "cwd": "${workspaceFolder}"
-        },
+        }
+,
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'day03_part2'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=day03_part2",
-                    "--package=day03"
-                ],
-                "filter": {
-                    "name": "day03_part2",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug executable 'day03_part2'",
+            "name": "Debug executable 'day10_part2'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day03_part2",
-                    "--package=day03"
+                    "--bin=day10_part2",
+                    "--package=day10"
                 ],
                 "filter": {
-                    "name": "day03_part2",
+                    "name": "day10_part2",
                     "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'day03_part2'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=day03_part2",
-                    "--package=day03"
-                ],
-                "filter": {
-                    "name": "day03_part2",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug benchmark 'day03-bench'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bench=day03-bench",
-                    "--package=day03"
-                ],
-                "filter": {
-                    "name": "day03-bench",
-                    "kind": "bench"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'grid'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=grid"
-                ],
-                "filter": {
-                    "name": "grid",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'utils'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=utils"
-                ],
-                "filter": {
-                    "name": "utils",
-                    "kind": "lib"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in library 'range_set'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--lib",
-                    "--package=range_set"
-                ],
-                "filter": {
-                    "name": "range_set",
-                    "kind": "lib"
                 }
             },
             "args": [],
