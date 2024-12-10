@@ -60,6 +60,51 @@ fn hiking_trails_ends(
     }
 }
 
+pub fn process2(input: &str) -> miette::Result<String, AocError> {
+    let grid = GridArray::from_newline_separated_string_into(
+        Topology::Bounded,
+        Neighborhood::Orthogonal,
+        input,
+        |ch| ch.to_digit(10).unwrap() as usize,
+    );
+    let summit_positions = grid.all_cells().filter(|(_coor, height)| *height == &9).collect_vec();
+    let trail_head_positions = grid.all_cells().filter(|(_coor, height)| *height == &0);
+
+    let mut cache: FxHashMap<UCoor2D, bool> = FxHashMap::default();
+    let result: usize = trail_head_positions
+        .map(|(trail_head_pos, _trail_head_height)| {
+            summit_positions.iter().filter(|(summit_pos, _)| {
+                hiking_trail_to_zero_exists(&grid, &trail_head_pos, summit_pos, &9,  &mut cache)
+            }).count()
+        })
+        .sum();
+
+    Ok(result.to_string())
+}
+
+fn hiking_trail_to_zero_exists(
+    grid: &GridArray<usize>,
+    goal: &UCoor2D,
+    pos: &UCoor2D,
+    height: &usize,
+    cache: &mut FxHashMap<UCoor2D, bool>
+) -> bool {
+    if height == &0 {
+        return goal == pos ;
+    }
+
+    if let Some(&count) = cache.get(pos) {
+        return count;
+    }
+    let exists = grid.neighborhood_cells(pos.x, pos.y)
+        .filter(|(_neighbor_coor, neighbor_height)| **neighbor_height == height - 1)
+        .any(|(neighbor_coor, neighbor_height)| {
+            hiking_trail_to_zero_exists(grid, goal, &neighbor_coor, neighbor_height, cache)
+        });
+    cache.insert(pos.clone(), exists);
+    exists
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
