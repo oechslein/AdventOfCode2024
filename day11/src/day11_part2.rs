@@ -1,19 +1,6 @@
-use std::{
-    collections::VecDeque,
-    num::{NonZeroU32, NonZeroU64},
-};
-
 use crate::custom_error::AocError;
 use cached::proc_macro::cached;
-use dashmap::DashMap;
-use fxhash::FxHashMap;
-use itertools::Itertools;
-use num_traits::ToPrimitive;
 use rayon::prelude::*;
-use smallvec::{smallvec, SmallVec};
-
-//type HashMapType = FxHashMap<(u64, u64), u64>;
-type HashMapType = DashMap<(u64, u64), u64>; // Concurrent HashMap
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
@@ -24,6 +11,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let result: u64 = input.par_bridge().map(|num| evolve(num, cycles)).sum();
     Ok(result.to_string())
 }
+
 #[cached]
 fn evolve(num: u64, cycles_left: u64) -> u64 {
     if cycles_left == 0 {
@@ -43,19 +31,9 @@ fn evolve(num: u64, cycles_left: u64) -> u64 {
     evolve(first_half, cycles_left - 1) + evolve(second_half, cycles_left - 1)
 }
 
-fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
-    let half_digits = digit_count / 2;
-    const RADIX: u64 = 10;
-    let divisor = RADIX.pow(half_digits);
-
-    let second_half = num % divisor;
-    let first_half = num / divisor;
-    smallvec![first_half, second_half]
-}
-
 fn split_in_two_tuple(digit_count: u32, num: u64) -> (u64, u64) {
-    let half_digits = digit_count / 2;
     const RADIX: u64 = 10;
+    let half_digits = digit_count / 2;
     let divisor = RADIX.pow(half_digits);
 
     let second_half = num % divisor;
