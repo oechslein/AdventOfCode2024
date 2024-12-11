@@ -1,4 +1,7 @@
-use std::num::{NonZeroU32, NonZeroU64};
+use std::{
+    collections::VecDeque,
+    num::{NonZeroU32, NonZeroU64},
+};
 
 use crate::custom_error::AocError;
 use dashmap::DashMap;
@@ -22,62 +25,42 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let cache: HashMapType = HashMapType::default();
     let result: NumType = input
         .par_bridge()
-        .map(|num| evolve(num, cycles, &cache))
+        .map(|num| evolve_rec(num, cycles, &cache))
         .sum();
     Ok(result.to_string())
 }
-fn evolve(num: NumType, cycles_left: CycleType, cache: &HashMapType) -> NumType {
-    let mut acc = 0;
-    evolve_tail_recursive(num, cycles_left, cache, &mut acc);
-    acc
-}
 
-fn evolve_tail_recursive(
-    num: NumType,
-    cycles_left: CycleType,
-    cache: &HashMapType,
-    acc: &mut NumType,
-) {
+fn evolve_rec(num: NumType, cycles_left: CycleType, cache: &HashMapType) -> NumType {
     if cycles_left == 0 {
-        *acc += 1;
-        return;
+        return 1;
     }
 
     if num == 0 {
         if cycles_left - 1 == 0 {
-            *acc += 1;
-            return;
+            return 1;
         }
-        evolve_tail_recursive(2024, cycles_left - 2, cache, acc);
-        return;
+        return evolve_rec(2024, cycles_left - 2, cache);
     }
 
     let digit_count = digit_count(num);
 
     if digit_count % 2 != 0 {
-        evolve_tail_recursive(num * 2024, cycles_left - 1, cache, acc);
-        return;
+        return evolve_rec(num * 2024, cycles_left - 1, cache);
     }
 
     let key = (num, cycles_left);
     if let Some(result) = cache.get(&key) {
-        *acc += *result;
-        return;
+        return *result;
     }
 
     let result = split_in_two(digit_count, num)
         .into_par_iter()
-        .map(|num| {
-            let mut tmp_acc = 0;
-            evolve_tail_recursive(*num, cycles_left - 1, cache, &mut tmp_acc);
-            tmp_acc
-        })
+        .map(|num| evolve_rec(*num, cycles_left - 1, cache))
         .sum();
-    //let result = evolve_tail_recursive(first_half, cycles_left - 1, cache) + evolve(second_half, cycles_left - 1, cache)
+    //let result = evolve(first_half, cycles_left - 1, cache) + evolve(second_half, cycles_left - 1, cache)
 
     cache.insert(key, result);
-
-    *acc += result;
+    result
 }
 
 fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
@@ -88,6 +71,16 @@ fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
     let second_half = num % divisor;
     let first_half = num / divisor;
     smallvec![first_half, second_half]
+}
+
+fn split_in_two_tuple(digit_count: u32, num: u64) -> (u64, u64) {
+    let half_digits = digit_count / 2;
+    const RADIX: NumType = 10;
+    let divisor = RADIX.pow(half_digits);
+
+    let second_half = num % divisor;
+    let first_half = num / divisor;
+    (first_half, second_half)
 }
 
 fn split_in_two_slow(_digit_count: u32, num: u64) -> (u64, u64) {
