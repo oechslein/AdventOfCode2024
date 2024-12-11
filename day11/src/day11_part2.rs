@@ -26,39 +26,58 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         .sum();
     Ok(result.to_string())
 }
-
 fn evolve(num: NumType, cycles_left: CycleType, cache: &HashMapType) -> NumType {
+    let mut acc = 0;
+    evolve_tail_recursive(num, cycles_left, cache, &mut acc);
+    acc
+}
+
+fn evolve_tail_recursive(
+    num: NumType,
+    cycles_left: CycleType,
+    cache: &HashMapType,
+    acc: &mut NumType,
+) {
     if cycles_left == 0 {
-        return 1;
+        *acc += 1;
+        return;
     }
 
     if num == 0 {
         if cycles_left - 1 == 0 {
-            return 1;
+            *acc += 1;
+            return;
         }
-        return evolve(2024, cycles_left - 2, cache);
+        evolve_tail_recursive(2024, cycles_left - 2, cache, acc);
+        return;
     }
 
     let digit_count = digit_count(num);
 
     if digit_count % 2 != 0 {
-        return evolve(num * 2024, cycles_left - 1, cache);
+        evolve_tail_recursive(num * 2024, cycles_left - 1, cache, acc);
+        return;
     }
 
     let key = (num, cycles_left);
     if let Some(result) = cache.get(&key) {
-        return *result;
+        *acc += *result;
+        return;
     }
 
     let result = split_in_two(digit_count, num)
         .into_par_iter()
-        .map(|num| evolve(*num, cycles_left - 1, cache))
+        .map(|num| {
+            let mut tmp_acc = 0;
+            evolve_tail_recursive(*num, cycles_left - 1, cache, &mut tmp_acc);
+            tmp_acc
+        })
         .sum();
-    //let result = evolve(first_half, cycles_left - 1, cache) + evolve(second_half, cycles_left - 1, cache)
+    //let result = evolve_tail_recursive(first_half, cycles_left - 1, cache) + evolve(second_half, cycles_left - 1, cache)
 
     cache.insert(key, result);
 
-    result
+    *acc += result;
 }
 
 fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
