@@ -4,6 +4,9 @@ set shell := ["cmd.exe", "/c"]
 run day part:
     cargo run -p day{{day}} --bin day{{day}}_part{{part}}
 
+run_release day part:
+    cargo run -p day{{day}} --bin day{{day}}_part{{part}} --release
+
 work-run day part:
     cargo watch --watch target/ -x "check -p day{{day}}"  -s "just lint day{{day}}" -x "run -p day{{day}} --bin day{{day}}_part{{part}}"
 
