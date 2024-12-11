@@ -21,6 +21,8 @@ dhat = { workspace = true }
 num-traits = { workspace = true }
 rayon = { workspace = true }
 fxhash = { workspace = true }
+dashmap = { workspace = true }
+smallvec = { workspace = true }
 
 # nom = { workspace = true }
 
