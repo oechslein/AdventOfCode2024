@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::custom_error::AocError;
+use cached::proc_macro::cached;
 use dashmap::DashMap;
 use fxhash::FxHashMap;
 use itertools::Itertools;
@@ -11,61 +12,40 @@ use num_traits::ToPrimitive;
 use rayon::prelude::*;
 use smallvec::{smallvec, SmallVec};
 
-type NumType = u64;
-type CycleType = u8;
-//type HashMapType = FxHashMap<(NumType, CycleType), NumType>;
-type HashMapType = DashMap<(NumType, CycleType), NumType>;
+//type HashMapType = FxHashMap<(u64, u64), u64>;
+type HashMapType = DashMap<(u64, u64), u64>; // Concurrent HashMap
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
     let input = input
         .split(' ')
-        .map(|num_str| num_str.parse::<NumType>().unwrap());
+        .map(|num_str| num_str.parse::<u64>().unwrap());
     let cycles = 75;
-    let cache: HashMapType = HashMapType::default();
-    let result: NumType = input
-        .par_bridge()
-        .map(|num| evolve_rec(num, cycles, &cache))
-        .sum();
+    let result: u64 = input.par_bridge().map(|num| evolve(num, cycles)).sum();
     Ok(result.to_string())
 }
-
-fn evolve_rec(num: NumType, cycles_left: CycleType, cache: &HashMapType) -> NumType {
+#[cached]
+fn evolve(num: u64, cycles_left: u64) -> u64 {
     if cycles_left == 0 {
         return 1;
     }
 
     if num == 0 {
-        if cycles_left - 1 == 0 {
-            return 1;
-        }
-        return evolve_rec(2024, cycles_left - 2, cache);
+        return evolve(1, cycles_left - 1);
     }
 
     let digit_count = digit_count(num);
-
     if digit_count % 2 != 0 {
-        return evolve_rec(num * 2024, cycles_left - 1, cache);
+        return evolve(num * 2024, cycles_left - 1);
     }
 
-    let key = (num, cycles_left);
-    if let Some(result) = cache.get(&key) {
-        return *result;
-    }
-
-    let result = split_in_two(digit_count, num)
-        .into_par_iter()
-        .map(|num| evolve_rec(*num, cycles_left - 1, cache))
-        .sum();
-    //let result = evolve(first_half, cycles_left - 1, cache) + evolve(second_half, cycles_left - 1, cache)
-
-    cache.insert(key, result);
-    result
+    let (first_half, second_half) = split_in_two_tuple(digit_count, num);
+    evolve(first_half, cycles_left - 1) + evolve(second_half, cycles_left - 1)
 }
 
 fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
     let half_digits = digit_count / 2;
-    const RADIX: NumType = 10;
+    const RADIX: u64 = 10;
     let divisor = RADIX.pow(half_digits);
 
     let second_half = num % divisor;
@@ -75,7 +55,7 @@ fn split_in_two(digit_count: u32, num: u64) -> SmallVec<[u64; 2]> {
 
 fn split_in_two_tuple(digit_count: u32, num: u64) -> (u64, u64) {
     let half_digits = digit_count / 2;
-    const RADIX: NumType = 10;
+    const RADIX: u64 = 10;
     let divisor = RADIX.pow(half_digits);
 
     let second_half = num % divisor;
@@ -83,16 +63,7 @@ fn split_in_two_tuple(digit_count: u32, num: u64) -> (u64, u64) {
     (first_half, second_half)
 }
 
-fn split_in_two_slow(_digit_count: u32, num: u64) -> (u64, u64) {
-    let num_str = num.to_string();
-    let mid = num_str.len() / 2;
-    let (first_half, second_half) = num_str.split_at(mid);
-    let first_half = first_half.parse::<NumType>().unwrap();
-    let second_half = second_half.parse::<NumType>().unwrap();
-    (second_half, first_half)
-}
-
-fn digit_count(num: NumType) -> u32 {
+fn digit_count(num: u64) -> u32 {
     debug_assert_ne!(num, 0);
     num.ilog10() + 1
 }

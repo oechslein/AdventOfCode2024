@@ -82,7 +82,7 @@ itertools = "0.13"
 rayon = "1.10"
 
 # Caching structures and simplified function memoization
-cached = "0.54"
+cached = { version = "0.54", features=["ahash"] }
 
 # A macro for declaring lazily evaluated statics in Rust. (use first https://doc.rust-lang.org/std/cell/struct.OnceCell.html)
 lazy_static = "1.5"

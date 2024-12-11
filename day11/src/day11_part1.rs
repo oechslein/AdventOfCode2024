@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn test_part1() -> miette::Result<()> {
         let input = include_str!("../input1.txt");
-        assert_eq!("", process(input)?);
+        assert_eq!("200446", process(input)?);
         Ok(())
     }
 }
