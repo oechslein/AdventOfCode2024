@@ -270,6 +270,23 @@ impl<T: Default + Clone + std::fmt::Display> GridArray<T> {
         )
     }
 
+
+    /// return all neighbor indexes (based on topology and neighborhood)
+    pub fn neighborhood_cells_and_dirs(
+        &self,
+        x: UCoor2DIndex,
+        y: UCoor2DIndex,
+    ) -> impl Iterator<Item = (UCoor2D, Direction)> {
+        grid_iteration::neighborhood_cells_and_dirs(
+            self.topology,
+            self.width,
+            self.height,
+            UCoor2D::new(x, y),
+            self.neighborhood,
+        )
+    }
+
+
     fn map_indexes_to_cells(
         &self,
         it: impl Iterator<Item = UCoor2D>,

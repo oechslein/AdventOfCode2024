@@ -156,6 +156,30 @@ impl<T: Clone + Ord + Eq + Display> Coor2DMut<T> {
     }
 }
 
+impl UCoor2D {
+    /// to icoor2d
+    pub fn to_icoor2d(&self) -> Option<ICoor2D> {
+        let x_converted = usize::try_into(self.x);
+        let y_converted = usize::try_into(self.y);
+        if x_converted.is_err() || y_converted.is_err() {
+            return None;
+        }
+        Some(Coor2DMut::new(x_converted.unwrap(), y_converted.unwrap()))
+    }
+}
+
+impl ICoor2D {
+    /// to ucoor2d
+    pub fn to_ucoor2d(&self) -> Option<UCoor2D> {
+        let x_converted = isize::try_into(self.x);
+        let y_converted = isize::try_into(self.y);
+        if x_converted.is_err() || y_converted.is_err() {
+            return None;
+        }
+        Some(Coor2DMut::new(x_converted.unwrap(), y_converted.unwrap()))
+    }
+}
+
 /// A type of topology
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Topology {

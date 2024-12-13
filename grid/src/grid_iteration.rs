@@ -88,7 +88,7 @@ pub(crate) fn all_cells(
 }
 
 /// Returns an iterator over the directions for given neighborhood type
-pub(crate) fn all_adjacent_directions(n: Neighborhood) -> impl Iterator<Item = Direction> {
+pub fn all_adjacent_directions(n: Neighborhood) -> impl Iterator<Item = Direction> {
     match n {
         Orthogonal => vec![North, South, East, West],
         Diagonal => vec![NorthWest, NorthEast, SouthEast, SouthWest],
@@ -109,6 +109,18 @@ pub(crate) fn neighborhood_cells(
 ) -> impl Iterator<Item = UCoor2D> {
     all_adjacent_directions(n)
         .filter_map(move |direction| adjacent_cell(t, width, height, index.clone(), direction))
+}
+
+/// Returns an iterator over the points in a neighborhood around a point
+pub(crate) fn neighborhood_cells_and_dirs(
+    t: Topology,
+    width: UCoor2DIndex,
+    height: UCoor2DIndex,
+    index: UCoor2D,
+    n: Neighborhood,
+) -> impl Iterator<Item = (UCoor2D, Direction)> {
+    all_adjacent_directions(n)
+        .filter_map(move |direction| adjacent_cell(t, width, height, index.clone(), direction).map(|coor| (coor, direction)))
 }
 
 #[cfg(test)]
