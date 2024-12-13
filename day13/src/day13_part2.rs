@@ -41,10 +41,10 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     let result = parse_input(input).map(|(prize_vec, coeff_matrix)| {
         if let Some(button_vec) = solve_system(prize_vec + additional_price_vec, coeff_matrix) {
             let costs = button_vec[0] * 3 + button_vec[1];
-            println!("A/B: {button_vec} => {costs}");
+            //println!("A/B: {button_vec} => {costs}");
             costs
         } else {
-            println!("No solution");
+            //println!("No solution");
             0
         }
     }).sum::<u64>();
