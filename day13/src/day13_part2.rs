@@ -1,14 +1,9 @@
-use fxhash::FxHashMap;
 use itertools::Itertools;
-use num_traits::ToPrimitive;
-use rayon::prelude::*;
-
 use crate::custom_error::AocError;
-
-use std::cmp::Ordering;
-
 use nalgebra::{Matrix2, Vector2};
 
+#[allow(clippy::cast_sign_loss)]
+#[allow(clippy::cast_precision_loss)]
 fn solve_system(
     prize_x: i128,
     prize_y: i128,
@@ -27,40 +22,11 @@ fn solve_system(
         && (prize_y == button_a * a_y + button_b * b_y)).then_some((button_a, button_b))
 }
 
-fn solve_system_manual(
-    prize_x: i128,
-    prize_y: i128,
-    a_x: i128,
-    a_y: i128,
-    b_x: i128,
-    b_y: i128,
-) -> Option<(i128, i128)> {
-    // Calculate the determinant of the coefficient matrix
-    let det = a_x * b_y - a_y * b_x;
-
-    // If the determinant is zero, the system has no unique solution
-    if det == 0 {
-        return None;
-    }
-
-    // Calculate the inverse of the coefficient matrix
-    let inv_a_x = b_y;
-    let inv_a_y = -a_y;
-    let inv_b_x = -b_x;
-    let inv_b_y = a_x;
-
-    // Calculate the solution using the inverse matrix
-    let button_a = (inv_a_x * prize_x + inv_b_x * prize_y) / det;
-    let button_b = (inv_a_y * prize_x + inv_b_y * prize_y) / det;
-
-    // Check if the solution is positive integers
-    ((prize_x == button_a * a_x + button_b * b_x)
-        && (prize_y == button_a * a_y + button_b * b_y)).then_some((button_a, button_b))
-}
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let input = input.replace("\r", "");
+    let var_name = "\r";
+    let input = input.replace(var_name, "");
     let input = input.split("\n\n").map(|block| {
         /* block is eg
         Button A: X+94, Y+34
@@ -78,24 +44,24 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
         let (a_x, a_y) = a
             .split(", ")
-            .map(|x| x.split("+").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('+').nth(1).unwrap().parse::<i128>().unwrap())
             .collect_tuple()
             .unwrap();
         let (b_x, b_y) = b
             .split(", ")
-            .map(|x| x.split("+").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('+').nth(1).unwrap().parse::<i128>().unwrap())
             .collect_tuple()
             .unwrap();
         let (prize_x, prize_y) = prize
             .split(", ")
-            .map(|x| x.split("=").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('=').nth(1).unwrap().parse::<i128>().unwrap())
             .collect_tuple()
             .unwrap();
 
         (
             (a_x, a_y),
             (b_x, b_y),
-            (10000000000000 + prize_x, 10000000000000 + prize_y),
+            (10_000_000_000_000 + prize_x, 10_000_000_000_000 + prize_y),
         )
     });
 

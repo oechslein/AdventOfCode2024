@@ -1,62 +1,45 @@
-use fxhash::FxHashMap;
 use itertools::Itertools;
-use num_traits::ToPrimitive;
-use rayon::prelude::*;
 
 use crate::custom_error::AocError;
 
-use std::cmp::Ordering;
-
 use nalgebra::{Matrix2, Vector2};
 
+
+#[allow(clippy::cast_sign_loss)]
 fn solve_system(
-    prize_x: i128,
-    prize_y: i128,
-    a_x: i128,
-    a_y: i128,
-    b_x: i128,
-    b_y: i128,
-) -> Option<(i128, i128)> {
-    let coeff_matrix = Matrix2::new(a_x as f64, b_x as f64, a_y as f64, b_y as f64);
-    let constants = Vector2::new(prize_x as f64, prize_y as f64);
-    let solution = coeff_matrix.lu().solve(&constants)?;
-    let button_a = solution[0].round() as i128;
-    let button_b = solution[1].round() as i128;
-
-    ((prize_x == button_a * a_x + button_b * b_x)
-        && (prize_y == button_a * a_y + button_b * b_y)).then_some((button_a, button_b))
+    prize_x: u32,
+    prize_y: u32,
+    a_x: u32,
+    a_y: u32,
+    b_x: u32,
+    b_y: u32,
+) -> Option<(u32, u32)> {
+    /*
+     prize_x = a_x * button_a + b_x * button_b
+     prize_y = a_y * button_a + b_y * button_b
+     =>
+     [ prize_x ] = (a_x, b_x ] * [ button_a ]
+     [ prize_y ] = (a_y, b_y ] * [ button_b ]
+     =>
+     [ button_a ] = (a_x, b_x ]^-1 * [ prize_x ]
+     [ button_b ] = (a_y, b_y ]^-1 * [ prize_y ]
+    */
+    let coeff_matrix = Matrix2::new(a_x, b_x, a_y, b_y).map(f64::from);
+    let constants = Vector2::new(prize_x, prize_y).map(f64::from);
+    coeff_matrix.try_inverse().and_then(|coeff_matrix_inverse| {
+        let solution = coeff_matrix_inverse * constants;
+        let button_a = solution[0].round() as u32;
+        let button_b = solution[1].round() as u32;
+        ((prize_x == button_a * a_x + button_b * b_x)
+            && (prize_y == button_a * a_y + button_b * b_y))
+            .then_some((button_a, button_b))
+    })
 }
 
-fn solve_system_manual(
-    prize_x: i128,
-    prize_y: i128,
-    a_x: i128,
-    a_y: i128,
-    b_x: i128,
-    b_y: i128,
-) -> Option<(i128, i128)> {
-    let det = a_x * b_y - a_y * b_x;
-    if det == 0 {
-        return None;
-    }
-
-    // Calculate the inverse of the coefficient matrix
-    let inv_a_x = b_y;
-    let inv_a_y = -a_y;
-    let inv_b_x = -b_x;
-    let inv_b_y = a_x;
-
-    // Calculate the solution using the inverse matrix
-    let button_a = (inv_a_x * prize_x + inv_b_x * prize_y) / det;
-    let button_b = (inv_a_y * prize_x + inv_b_y * prize_y) / det;
-
-    ((prize_x == button_a * a_x + button_b * b_x)
-        && (prize_y == button_a * a_y + button_b * b_y)).then_some((button_a, button_b))
-}
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String, AocError> {
-    let input = input.replace("\r", "");
+    let input = input.replace('\r', "");
     let input = input.split("\n\n").map(|block| {
         /* block is eg
         Button A: X+94, Y+34
@@ -74,17 +57,17 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
         let (a_x, a_y) = a
             .split(", ")
-            .map(|x| x.split("+").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('+').nth(1).unwrap().parse::<u32>().unwrap())
             .collect_tuple()
             .unwrap();
         let (b_x, b_y) = b
             .split(", ")
-            .map(|x| x.split("+").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('+').nth(1).unwrap().parse::<u32>().unwrap())
             .collect_tuple()
             .unwrap();
         let (prize_x, prize_y) = prize
             .split(", ")
-            .map(|x| x.split("=").nth(1).unwrap().parse::<i128>().unwrap())
+            .map(|x| x.split('=').nth(1).unwrap().parse::<u32>().unwrap())
             .collect_tuple()
             .unwrap();
 
@@ -93,7 +76,9 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
 
     let mut result = 0;
     for ((a_x, a_y), (b_x, b_y), (prize_x, prize_y)) in input {
-        if let Some((button_a, button_b)) = solve_system(prize_x, prize_y, a_x, a_y, b_x, b_y) {
+        if let Some((button_a, button_b)) =
+            solve_system(prize_x, prize_y, a_x, a_y, b_x, b_y)
+        {
             /* println!(
                 "A: {}, B: {} => {}",
                 button_a,
@@ -102,7 +87,7 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
             ); */
             result += button_a * 3 + button_b;
         } else {
-          //  println!("No solution");
+            //  println!("No solution");
         }
     }
 
