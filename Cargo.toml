@@ -6,69 +6,69 @@ default-members = ["day*", "grid", "utils"]
 
 [workspace.dependencies]
 # glam is a simple and fast linear algebra library for games and graphics. Features. f32 types. vectors: Vec2, Vec3, Vec3A and Vec4
-glam = "0.29"
+glam = "0.29.2"
 
 # nom is a parser combinator library with a focus on safe parsing, streaming patterns, and as much as possible zero copy.
-nom = "7.1"
+nom = "7.1.3"
 
 # Graph data structure library. Provides graph types and graph algorithms.
-petgraph = "0.6"
+petgraph = "0.6.5"
 
 #  fast, non-secure, hashing algorithm derived from an internal hasher used in FireFox and Rustc.
-fxhash = "0.2"
+fxhash = "0.2.1"
 
 # Pathfinding, flow, and graph algorithms
-pathfinding = "4.4"
+pathfinding = "4.12.0"
 
 # image processing
-image = "0.25"
+image = "0.25.5"
 #  GIF de- and encoder
-gif = "0.13"
+gif = "0.13.1"
 
 # This crate provides routines for searching strings for matches of a regular expression (aka “regex”)
-regex = "1.11"
+regex = "1.11.1"
 # With lazy-regex macros, regular expressions
-lazy-regex = "3.1"
+lazy-regex = "3.3.0"
 
 # Simple package to count generic iterables
-counter = "0.6"
+counter = "0.6.0"
 
 # Addresses memory by bits, for packed collections and bitfields
-bitvec = "1.0"
+bitvec = "1.0.1"
 
 # A fixed sized two-dimensional array
 #array2d = "0.3"
 
 # Numeric traits for generic mathematics (e.g. safe conversions)
-num-traits = "0.2"
+num-traits = "0.2.19"
 
 # A collection of numeric types and traits for Rust: num-bigint, num-complex, num-integer,num-iter, num-rational, num-traits, (num-derive)
-num = "0.4"
+num = "0.4.3"
 
 # Generic interval and interval set library.
-intervallum = "1.4"
+intervallum = "1.4.1"
 # Wrappers of the standard collection library for generic programming.
-gcollections = "1.5"
+gcollections = "1.5.0"
 
 # A set of non-overlapping ranges, backed by SmallVec<T>
-range-collections = "0.4"
+range-collections = "0.4.5"
 #Small vectors in various sizes. These store a certain number of elements inline, and fall back to the heap for larger allocations. This can be a useful optimization for improving cache locality and reducing allocator traffic for workloads that fit within the inline buffer.
-smallvec = "1.13"
+smallvec = "1.13.2"
 
 # indicatif is a library for Rust that helps you build command line interfaces that report progress to users. It comes with various tools and utilities for formatting anything that indicates progress.
-indicatif = { version = "0.17", features = ["rayon"] }
+indicatif = { version = "0.17.9", features = ["rayon"] }
 
 # A simple and generic library for vector math.
-vecmath = "1"
+vecmath = "1.0.0"
 
 # A low-dimensional linear algebra library, targeted at computer graphics.
-cgmath = "0.18"
+cgmath = "0.18.0"
 
 # A pure-Rust hash table which preserves (in a limited sense) insertion order.
-indexmap = "2.1"
+indexmap = "2.7.0"
 
 # A Rust library for creating Parallel Splitting Iterators for Rayon (e.g. DFS or BFS)
-spliter = "0.1"
+spliter = "0.1.0"
 
 # DashMap is an implementation of a concurrent associative array/hashmap in Rust.
 dashmap = {version ="6.1.0", features = ["rayon", "inline"]}
@@ -79,50 +79,50 @@ nalgebra = "0.33.2"
 ############################################################################################################################################################
 
 # Extra iterator adaptors, iterator methods, free functions, and macros.
-itertools = "0.13"
+itertools = "0.13.0"
 
 # Data-parallelism library that makes it easy to convert sequential computations into parallel
-rayon = "1.10"
+rayon = "1.10.0"
 
 # Caching structures and simplified function memoization
-cached = { version = "0.54", features=["ahash"] }
+cached = { version = "0.54.0", features=["ahash"] }
 
 # A macro for declaring lazily evaluated statics in Rust. (use first https://doc.rust-lang.org/std/cell/struct.OnceCell.html)
-lazy_static = "1.5"
+lazy_static = "1.5.0"
 # Fancy diagnostic reporting library and protocol for us mere mortals who aren't compiler hackers.
 
-miette = { version = "7.4", features = ["fancy"] }
+miette = { version = "7.4.0", features = ["fancy"] }
 # derive(Error)
-thiserror = "2.0"
+thiserror = "2.0.6"
 
-derive_builder = "0.20"
-derive_more = { version = "1.0", features = ["full"] }
+derive_builder = "0.20.2"
+derive_more = { version = "1.0.0", features = ["full"] }
 
 # This crate provides derive macro Display and FromStr. These macros use common helper attributes to specify the format.
-parse-display = "0.10"
+parse-display = "0.10.0"
 
 ############################################################################################################################################################
 #  A scoped, structured logging and diagnostics system.
-tracing = "0.1"
+tracing = "0.1.41"
 # Utilities for implementing and composing tracing subscribers.
-tracing-subscriber = "0.3"
+tracing-subscriber = "0.3.19"
 # Inspect tracing-enabled Rust applications with Tracy
-tracing-tracy = "0.11"
+tracing-tracy = "0.11.3"
 
 # This crate will help you to write simpler tests by leveraging a software testing concept called test fixtures. A fixture is something that you can use in your tests to encapsulate a test’s dependencies.
-rstest = "0.23"
+rstest = "0.23.0"
 # This crate give a way to define a tests set and apply them to every case you need to test.
-rstest_reuse = "0.7"
+rstest_reuse = "0.7.0"
 
 # Fast & Simple Benchmarking for Rust
-divan = "0.1"
+divan = "0.1.17"
 # Statistics-driven micro-benchmarking library
 #criterion = { version = "0.5", features = ["html_reports"] }
 
-tracy-client = "0.17"
-tracy-client-sys = "0.24"
+tracy-client = "0.17.5"
+tracy-client-sys = "0.24.2"
 
-dhat = "0.3"
+dhat = "0.3.3"
 
 [profile.flamegraph]
 inherits = "release"
