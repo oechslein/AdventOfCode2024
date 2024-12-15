@@ -1,7 +1,7 @@
+use fxhash::FxHashMap;
 use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
-use fxhash::FxHashMap;
 
 use crate::custom_error::AocError;
 
@@ -15,14 +15,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_part1_example() -> miette::Result<()> {
+    fn test_example() -> miette::Result<()> {
         let input = "";
         assert_eq!("", process(&input.replace('\r', ""))?);
         Ok(())
     }
 
     #[test]
-    fn test_part1() -> miette::Result<()> {
+    fn test_input() -> miette::Result<()> {
         let input = include_str!("../input1.txt");
         assert_eq!("", process(&input.replace('\r', ""))?);
         Ok(())
