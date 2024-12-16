@@ -36,13 +36,12 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
     Ok(result.to_string())
 }
 
-
-
-
 lazy_static! {
-    static ref CORNER_DIRECTIONS: Vec<(Direction, Direction)> = [Direction::West, Direction::East].into_iter().cartesian_product([Direction::North, Direction::South]).collect_vec();
+    static ref CORNER_DIRECTIONS: Vec<(Direction, Direction)> = [Direction::West, Direction::East]
+        .into_iter()
+        .cartesian_product([Direction::North, Direction::South])
+        .collect_vec();
 }
-
 
 impl Region {
     fn area(&self) -> usize {
@@ -55,9 +54,7 @@ impl Region {
             .map_or(false, |converted_corr| self.plots.contains(&converted_corr))
     }
 
-
     fn sides(&self) -> usize {
-
         fn _combine_dirs(dir1: Direction, dir2: Direction) -> Direction {
             match (dir1, dir2) {
                 (Direction::West, Direction::North) => Direction::NorthWest,
@@ -68,16 +65,26 @@ impl Region {
             }
         }
 
-        self.plots.iter().map(|coor| {
-            let outer_corner_count = CORNER_DIRECTIONS.iter().filter(|(dir1, dir2)| {
-                !self._contains(coor, *dir1) && !self._contains(coor, *dir2)
-            }).count();
-            let count = CORNER_DIRECTIONS.iter().filter(|(dir1, dir2)| {
-                self._contains(coor, *dir1) && self._contains(coor, *dir2) && !self._contains(coor, _combine_dirs(*dir1, *dir2))
-            }).count();
-            outer_corner_count +
-            count
-        }).sum()
+        self.plots
+            .iter()
+            .map(|coor| {
+                let outer_corner_count = CORNER_DIRECTIONS
+                    .iter()
+                    .filter(|(dir1, dir2)| {
+                        !self._contains(coor, *dir1) && !self._contains(coor, *dir2)
+                    })
+                    .count();
+                let inner_corner_count = CORNER_DIRECTIONS
+                    .iter()
+                    .filter(|(dir1, dir2)| {
+                        self._contains(coor, *dir1)
+                            && self._contains(coor, *dir2)
+                            && !self._contains(coor, _combine_dirs(*dir1, *dir2))
+                    })
+                    .count();
+                outer_corner_count + inner_corner_count
+            })
+            .sum()
     }
 }
 
@@ -92,7 +99,7 @@ fn create_regions(
         .find(|(coor, plot)| **plot == plant_type && !processed_map.contains(coor))
     {
         let region = create_region(grid, plant_type, coor, processed_map);
-/*         println!(
+        /*         println!(
             "{} {} sides: {}",
             region.plant,
             region.area(),
