@@ -1,12 +1,9 @@
-use fxhash::FxHashMap;
 use grid::{
     grid_array::GridArray,
     grid_types::{Direction, Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
-use num_traits::ToPrimitive;
 use pathfinding::prelude::dijkstra;
-use rayon::prelude::*;
 
 use crate::custom_error::AocError;
 
@@ -20,22 +17,23 @@ struct Node {
 
 impl Eq for Node {}
 
+fn costs(direction1: Direction, direction2: Direction) -> usize {
+    if direction1 == direction2 {
+        1
+    } else if (direction1 == direction2.rotate(90)) || (direction1 == direction2.rotate(-90)) {
+        1000 + 1
+    } else {
+        debug_assert_eq!(direction1, direction2.rotate(180));
+        2 * 1000 + 1
+    }
+}
+
 impl Node {
     fn successors(&self, grid: &GridArray<char>) -> Vec<(Node, usize)> {
         grid.neighborhood_cells_and_dirs(self.coor.x, self.coor.y)
             .filter(|(_coor, _direction, cell)| cell != &&'#')
             .map(|(coor, direction, _cell)| {
-                let costs = if direction == self.direction {
-                    1
-                } else if (direction == self.direction.rotate(90))
-                    || (direction == self.direction.rotate(-90))
-                {
-                    1000 + 1
-                } else {
-                    debug_assert_eq!(direction, self.direction.rotate(180));
-                    2 * 1000 + 1
-                };
-                (Node { coor, direction }, costs)
+                (Node { coor, direction }, costs(direction, self.direction))
             })
             .collect_vec()
     }
@@ -67,10 +65,8 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         |node| node.successors(&grid),
         |node| node.success(&grid),
     );
-
-    //println!("{result:?}");
-
-    Ok(result.unwrap().1.to_string())
+    let min_costs = &result.unwrap().1;
+    Ok(min_costs.to_string())
 }
 
 #[cfg(test)]

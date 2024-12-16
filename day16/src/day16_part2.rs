@@ -1,12 +1,9 @@
-use fxhash::{FxHashMap, FxHashSet};
 use grid::{
     grid_array::GridArray,
     grid_types::{Direction, Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
-use num_traits::ToPrimitive;
-use pathfinding::prelude::{astar, astar_bag, dijkstra, dijkstra_all};
-use rayon::prelude::*;
+use pathfinding::prelude::astar_bag;
 
 use crate::custom_error::AocError;
 
@@ -21,23 +18,37 @@ struct Node {
 impl Eq for Node {}
 
 impl Node {
+    fn costs(direction1: Direction, direction2: Direction) -> usize {
+        if direction1 == direction2 {
+            1
+        } else if (direction1 == direction2.rotate(90)) || (direction1 == direction2.rotate(-90)) {
+            1000 + 1
+        } else {
+            debug_assert_eq!(direction1, direction2.rotate(180));
+            2 * 1000 + 1
+        }
+    }
+
+    fn get_start_node(grid: &GridArray<char>) -> Node {
+        Node {
+            coor: find_cells_coor(grid, 'S'),
+            direction: Direction::East,
+        }
+    }
+
     fn successors(&self, grid: &GridArray<char>) -> Vec<(Node, usize)> {
         grid.neighborhood_cells_and_dirs(self.coor.x, self.coor.y)
-            .filter(|(_coor, _direction, cell)| cell != &&'#')
-            .map(|(coor, direction, _cell)| {
-                let costs = if direction == self.direction {
-                    1
-                } else if (direction == self.direction.rotate(90))
-                    || (direction == self.direction.rotate(-90))
-                {
-                    1000 + 1
-                } else {
-                    debug_assert_eq!(direction, self.direction.rotate(180));
-                    2 * 1000 + 1
-                };
-                (Node { coor, direction }, costs)
+            .filter(|(_neighbor_coor, _neighbor_direction, neighbor_cell)| neighbor_cell != &&'#')
+            .map(|(neighbor_coor, neighbor_direction, _neighbor_cell)| {
+                (
+                    Node {
+                        coor: neighbor_coor,
+                        direction: neighbor_direction,
+                    },
+                    Node::costs(neighbor_direction, self.direction),
+                )
             })
-            .collect_vec()
+            .collect()
     }
 
     fn success(&self, grid: &GridArray<char>) -> bool {
@@ -56,36 +67,37 @@ pub fn process(input: &str) -> miette::Result<String, AocError> {
         input,
     );
 
-    let start_coor = grid
-        .all_cells()
-        .filter(|(_coor, cell)| cell == &&'S')
-        .map(|(coor, _cell)| coor)
-        .next()
-        .unwrap();
-    let end_coor = grid
-        .all_cells()
-        .filter(|(_coor, cell)| cell == &&'E')
-        .map(|(coor, _cell)| coor)
-        .next()
-        .unwrap();
-    let start = Node {
-        coor: start_coor,
-        direction: Direction::East,
-    };
-    let result = astar_bag(
-        &start,
+    let end_coor = find_cells_coor(&grid, 'E');
+
+    let solutions = astar_bag(
+        &Node::get_start_node(&grid),
         |node| node.successors(&grid),
         |node| node.heuristic(&end_coor),
         |node| node.success(&grid),
     );
 
-    let solutions = result.unwrap().0;
-    let unique_coors = solutions
-        .flat_map(|path| path.into_iter().map(|n| n.coor))
-        .unique()
-        .count();
+    Ok(solutions
+        .map(|(solutions, _min_costs)| {
+            solutions
+                .flat_map(|path| path.into_iter().map(|n| n.coor))
+                .unique()
+                .count()
+                .to_string()
+        })
+        .unwrap())
+}
 
-    Ok(unique_coors.to_string())
+fn find_cells_coor(
+    grid: &GridArray<char>,
+    cell_to_find: char,
+) -> grid::grid_types::Coor2DMut<usize> {
+    let start_coor = grid
+        .all_cells()
+        .filter(|(_coor, cell)| cell == &&cell_to_find)
+        .map(|(coor, _cell)| coor)
+        .next()
+        .unwrap();
+    start_coor
 }
 
 #[cfg(test)]
