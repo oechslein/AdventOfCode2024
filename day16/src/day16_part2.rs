@@ -1,6 +1,6 @@
 use grid::{
     grid_array::GridArray,
-    grid_types::{Direction, Neighborhood, Topology, UCoor2D},
+    grid_types::{Direction, ICoor2D, Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
 use pathfinding::prelude::astar_bag;
@@ -18,17 +18,6 @@ struct Node {
 impl Eq for Node {}
 
 impl Node {
-    fn costs(direction1: Direction, direction2: Direction) -> usize {
-        if direction1 == direction2 {
-            1
-        } else if (direction1 == direction2.rotate(90)) || (direction1 == direction2.rotate(-90)) {
-            1000 + 1
-        } else {
-            debug_assert_eq!(direction1, direction2.rotate(180));
-            2 * 1000 + 1
-        }
-    }
-
     fn get_start_node(grid: &GridArray<char>) -> Node {
         Node {
             coor: find_cells_coor(grid, 'S'),
@@ -37,18 +26,36 @@ impl Node {
     }
 
     fn successors(&self, grid: &GridArray<char>) -> Vec<(Node, usize)> {
-        grid.neighborhood_cells_and_dirs(self.coor.x, self.coor.y)
-            .filter(|(_neighbor_coor, _neighbor_direction, neighbor_cell)| neighbor_cell != &&'#')
-            .map(|(neighbor_coor, neighbor_direction, _neighbor_cell)| {
-                (
+        let mut result = Vec::with_capacity(3);
+        result.push((
+            Node {
+                coor: self.coor.clone(),
+                direction: self.direction.rotate(90),
+            },
+            1000,
+        ));
+        result.push((
+            Node {
+                coor: self.coor.clone(),
+                direction: self.direction.rotate(-90),
+            },
+            1000,
+        ));
+        if let Some(new_coor) =
+            (self.coor.to_icoor2d().unwrap() + self.direction.diff_coor()).to_ucoor2d()
+        {
+            if grid.get_unchecked(new_coor.x, new_coor.y) != &'#' {
+                // we can move in current direction
+                result.push((
                     Node {
-                        coor: neighbor_coor,
-                        direction: neighbor_direction,
+                        coor: new_coor,
+                        direction: self.direction,
                     },
-                    Node::costs(neighbor_direction, self.direction),
-                )
-            })
-            .collect()
+                    1,
+                ));
+            }
+        }
+        result
     }
 
     fn success(&self, grid: &GridArray<char>) -> bool {
