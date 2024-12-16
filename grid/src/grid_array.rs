@@ -270,9 +270,8 @@ impl<T: Default + Clone + std::fmt::Display> GridArray<T> {
         )
     }
 
-
-    /// return all neighbor indexes (based on topology and neighborhood)
-    pub fn neighborhood_cells_and_dirs(
+    /// return all neighbor indexes incl. direction (based on topology and neighborhood)
+    pub fn neighborhood_cell_indexes_and_dirs(
         &self,
         x: UCoor2DIndex,
         y: UCoor2DIndex,
@@ -285,7 +284,6 @@ impl<T: Default + Clone + std::fmt::Display> GridArray<T> {
             self.neighborhood,
         )
     }
-
 
     fn map_indexes_to_cells(
         &self,
@@ -306,13 +304,26 @@ impl<T: Default + Clone + std::fmt::Display> GridArray<T> {
         self.map_indexes_to_cells(self.all_indexes())
     }
 
-    /// return all neighbor elements (based on topology and neighborhood)
+    /// return all neighbor indexes & elements (based on topology and neighborhood)
     pub fn neighborhood_cells(
         &self,
         x: UCoor2DIndex,
         y: UCoor2DIndex,
     ) -> impl Iterator<Item = (UCoor2D, &T)> {
         self.map_indexes_to_cells(self.neighborhood_cell_indexes(x, y))
+    }
+
+    /// return all neighbor indexes, direction & elements (based on topology and neighborhood)
+    pub fn neighborhood_cells_and_dirs(
+        &self,
+        x: UCoor2DIndex,
+        y: UCoor2DIndex,
+    ) -> impl Iterator<Item = (UCoor2D, Direction, &T)> {
+        self.neighborhood_cell_indexes_and_dirs(x, y)
+            .map(|(coor, direction)| {
+                let cell = self.get_unchecked(coor.x, coor.y);
+                (coor, direction, cell)
+            })
     }
 
     /// return adjacent cell in direction
