@@ -43,7 +43,7 @@ impl Node {
     }
 }
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let grid = GridArray::from_newline_separated_string(
         Topology::Bounded,
         Neighborhood::Orthogonal,

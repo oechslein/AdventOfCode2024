@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_must_use)]
-//#![deny(clippy::all, clippy::pedantic)]
+//#![warn(clippy::all, clippy::pedantic)]
 #![allow(
     clippy::enum_glob_use,
     clippy::many_single_char_names,
@@ -14,8 +14,6 @@
     clippy::bool_to_int_with_if,
 )]
 
-
-mod custom_error;
 
 pub mod {{crate_name}}_part1;
 pub mod {{crate_name}}_part2;
