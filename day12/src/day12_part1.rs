@@ -11,7 +11,7 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 #[derive(Debug, Clone)]
 struct Region {
@@ -20,7 +20,7 @@ struct Region {
 }
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let grid =
         GridArray::from_newline_separated_string(Topology::Bounded, Neighborhood::Orthogonal, input);
     let mut processed_map: FxHashSet<UCoor2D> = FxHashSet::default();

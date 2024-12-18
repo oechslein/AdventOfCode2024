@@ -4,10 +4,10 @@ use grid::{
 };
 use itertools::Itertools;
 
-use crate::custom_error::AocError;
+
 
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap)]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let grid =
         GridArray::from_newline_separated_string(Topology::Bounded, Neighborhood::Square, input);
 

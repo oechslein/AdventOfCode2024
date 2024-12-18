@@ -5,8 +5,6 @@ use grid::{
 use itertools::Itertools;
 use pathfinding::prelude::dijkstra;
 
-use crate::custom_error::AocError;
-
 //#[tracing::instrument]
 
 #[derive(Debug, Clone, PartialEq, Hash)]

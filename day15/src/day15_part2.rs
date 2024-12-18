@@ -9,10 +9,10 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let (mut grid, movements) = parse(input);
     let mut robot_coor = get_robot_pos(&grid);
     let mut moves = FxHashMap::default();

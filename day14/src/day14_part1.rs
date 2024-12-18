@@ -8,10 +8,10 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     process2(input, 101, 103)
     //process2(input, 11, 7)
 }
@@ -21,7 +21,7 @@ struct Robot {
     vel: ICoor2D,
 }
 
-pub fn process2(input: &str, width: usize, height: usize) -> miette::Result<String, AocError> {
+pub fn process2(input: &str, width: usize, height: usize) -> miette::Result<String> {
     let mut robots = input
         .lines()
         .map(|line| {

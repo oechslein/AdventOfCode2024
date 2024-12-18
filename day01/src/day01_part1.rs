@@ -1,10 +1,10 @@
 use itertools::Itertools;
 
-use crate::custom_error::AocError;
+
 use std::iter::zip;
 
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut array_left: Vec<i64> = Vec::new();
     let mut array_right: Vec<i64> = Vec::new();
 

@@ -1,9 +1,9 @@
-use crate::custom_error::AocError;
+
 use cached::proc_macro::cached;
 use rayon::prelude::*;
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let input = input
         .split(' ')
         .map(|num_str| num_str.parse::<u64>().unwrap());

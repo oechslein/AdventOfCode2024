@@ -8,10 +8,10 @@ use itertools::{Itertools, PeekingNext};
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut input = input.chars().peekable();
     let mut result = 0;
 

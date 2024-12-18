@@ -12,7 +12,5 @@
     clippy::doc_markdown,
 )]
 
-mod custom_error;
-
 pub mod day01_part1;
 pub mod day01_part2;

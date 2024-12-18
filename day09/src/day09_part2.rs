@@ -1,6 +1,6 @@
 //use itertools::Itertools;
 
-use crate::custom_error::AocError;
+
 
 struct Space {
     id: Option<usize>,
@@ -8,7 +8,7 @@ struct Space {
     free: usize,
 }
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut space_list = parse_input(input);
     let highest_id = space_list.iter().filter_map(|s| s.id).max().unwrap_or(0);
 

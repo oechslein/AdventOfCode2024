@@ -1,6 +1,6 @@
 use itertools::Itertools;
 
-use crate::custom_error::AocError;
+
 
 use nalgebra::{Matrix2, Vector2};
 
@@ -38,7 +38,7 @@ fn solve_system(
 
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let input = input.replace('\r', "");
     let input = input.split("\n\n").map(|block| {
         /* block is eg

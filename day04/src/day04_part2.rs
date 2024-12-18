@@ -10,10 +10,10 @@ use itertools::{EitherOrBoth, Itertools};
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let grid =
         GridArray::from_newline_separated_string(Topology::Bounded, Neighborhood::Square, input);
 

@@ -14,7 +14,5 @@
     clippy::bool_to_int_with_if
 )]
 
-mod custom_error;
-
 pub mod day11_part1;
 pub mod day11_part2;

@@ -11,7 +11,7 @@ use miette::Error;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
 #[derive(Clone, Debug, PartialEq)]
@@ -67,7 +67,7 @@ fn get_index(x: usize, y: usize, height: usize) -> usize {
     x * height + y
 }
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let (width, height) = (101, 103);
     let mut position_count_vec = vec![0; width * height];
     let mut robots = input

@@ -1,4 +1,4 @@
-use crate::custom_error::AocError;
+
 use itertools::Itertools;
 use nalgebra::{Matrix2, Vector2};
 
@@ -36,7 +36,7 @@ fn solve_system(prize_vector: Vector2<u64>, coeff_matrix: Matrix2<u64>) -> Optio
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let additional_price_vec = Vector2::new(10_000_000_000_000, 10_000_000_000_000);
     let result = parse_input(input).map(|(prize_vec, coeff_matrix)| {
         if let Some(button_vec) = solve_system(prize_vec + additional_price_vec, coeff_matrix) {

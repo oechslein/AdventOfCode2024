@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::custom_error::AocError;
+
 use grid::{grid_array::GridArray, grid_types::UCoor2D};
 
 use grid::grid_types::Direction;
@@ -10,7 +10,7 @@ use grid::grid_types::{Neighborhood, Topology};
 use itertools::Itertools;
 use rayon::prelude::*;
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut grid = GridArray::from_newline_separated_string(
         Topology::Bounded,
         Neighborhood::Orthogonal,

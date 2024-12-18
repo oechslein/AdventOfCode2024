@@ -1,7 +1,7 @@
-use crate::custom_error::AocError;
+
 use counter::Counter;
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut array_left: Vec<i32> = Vec::new();
     let mut array_right: Vec<i32> = Vec::new();
 

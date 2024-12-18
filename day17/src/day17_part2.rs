@@ -1,5 +1,3 @@
-use std::i32::MAX;
-
 use fxhash::FxHashMap;
 use itertools::{join, Itertools};
 use num_traits::ToPrimitive;
@@ -332,8 +330,8 @@ fn solve_fast_input(a_value: usize) -> Option<usize> {
 fn solve_fast_example(a_value: usize) -> Option<usize> {
     let mut instr = 0;
     let mut a = a_value;
-    let mut b = 0;
-    let mut c = 0;
+    //let mut b = 0;
+    //let mut c = 0;
 
     ////// generated code:
     while instr < 3 {

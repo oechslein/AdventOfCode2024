@@ -15,7 +15,5 @@
 )]
 
 
-mod custom_error;
-
 pub mod day12_part1;
 pub mod day12_part2;

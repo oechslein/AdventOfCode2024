@@ -13,7 +13,5 @@
     clippy::module_name_repetitions
 )]
 
-mod custom_error;
-
 pub mod day06_part1;
 pub mod day06_part2;

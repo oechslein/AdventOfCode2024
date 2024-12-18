@@ -1,7 +1,7 @@
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let input = input
         .split(' ')
         .map(|num_str| num_str.parse::<u128>().unwrap());

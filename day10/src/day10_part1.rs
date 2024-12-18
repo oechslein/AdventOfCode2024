@@ -9,10 +9,10 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use crate::custom_error::AocError;
+
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let grid = GridArray::from_newline_separated_string_into(
         Topology::Bounded,
         Neighborhood::Orthogonal,
@@ -60,7 +60,7 @@ fn hiking_trails_ends(
     }
 }
 
-pub fn process2(input: &str) -> miette::Result<String, AocError> {
+pub fn process2(input: &str) -> miette::Result<String> {
     let grid = GridArray::from_newline_separated_string_into(
         Topology::Bounded,
         Neighborhood::Orthogonal,

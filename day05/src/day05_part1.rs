@@ -4,7 +4,7 @@ use num_traits::ToPrimitive;
 use rayon::prelude::*;
 use smallvec::SmallVec;
 
-use crate::custom_error::AocError;
+
 
 type Page = u8;
 type PageVec = SmallVec<[Page; 20]>;
@@ -32,7 +32,7 @@ fn parse_rules(rules_str: &str) -> FxHashMap<Page, PageVec> {
 }
 
 //#[tracing::instrument]
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let input = input.replace("\r\n", "\n");
     let (rules_str, updates_str) = input.split_once("\n\n").unwrap();
     let rules = parse_rules(rules_str);

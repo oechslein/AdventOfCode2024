@@ -1,6 +1,6 @@
-use crate::custom_error::AocError;
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+
+pub fn process(input: &str) -> miette::Result<String> {
     let input = input.lines().map(|line| {
         let (result, args_str) = line.split_once(": ").unwrap();
 

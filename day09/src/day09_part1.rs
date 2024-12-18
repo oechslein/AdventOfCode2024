@@ -1,6 +1,6 @@
 // use itertools::Itertools;
 
-use crate::custom_error::AocError;
+
 
 struct Space {
     id: Option<usize>,
@@ -8,7 +8,7 @@ struct Space {
     free: usize,
 }
 
-pub fn process(input: &str) -> miette::Result<String, AocError> {
+pub fn process(input: &str) -> miette::Result<String> {
     let mut space_list = vec![];
     let mut free_space = false;
     let mut id = 0;
