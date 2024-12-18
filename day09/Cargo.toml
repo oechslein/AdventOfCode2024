@@ -10,19 +10,19 @@ grid = { path = "../grid/" }
 # utils = { path = "../utils" }
 # aoc = { path = "../aoc" }
 
-itertools = { workspace = true }
-nom = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
-miette = { workspace = true }
-thiserror = { workspace = true }
+itertools.workspace = true
+nom.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+miette.workspace = true
+thiserror.workspace = true
 
-rayon = { workspace = true }
+rayon.workspace = true
 
 [dev-dependencies]
-divan = { workspace = true }
-rstest = { workspace = true }
-dhat = { workspace = true }
+divan.workspace = true
+rstest.workspace = true
+dhat.workspace = true
 
 [[bench]]
 name = "day09-bench"

@@ -11,20 +11,20 @@ edition = "2021"
 # aoc = { path = "../aoc" }
 # range_set = { path = "../range_set/" }
 
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
-miette = { workspace = true }
-thiserror = { workspace = true }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+miette.workspace = true
+thiserror.workspace = true
 
-itertools = { workspace = true }
+itertools.workspace = true
 
-rayon = { workspace = true }
-cached = { workspace = true }
+rayon.workspace = true
+cached.workspace = true
 
 
 [dev-dependencies]
-divan = { workspace = true }
-rstest = { workspace = true }
+divan.workspace = true
+rstest.workspace = true
 
 [[bench]]
 name = "day11-bench"

@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-derive_builder = { workspace = true }
-derive_more = { workspace = true }
+derive_builder.workspace = true
+derive_more.workspace = true
 
-itertools = { workspace = true }
+itertools.workspace = true
 
-fxhash = { workspace = true }
+fxhash.workspace = true

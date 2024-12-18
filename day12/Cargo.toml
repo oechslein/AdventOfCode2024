@@ -11,26 +11,26 @@ grid = { path = "../grid/" }
 # aoc = { path = "../aoc" }
 # range_set = { path = "../range_set/" }
 
-itertools = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
-miette = { workspace = true }
-thiserror = { workspace = true }
-dhat = { workspace = true }
+itertools.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+miette.workspace = true
+thiserror.workspace = true
+dhat.workspace = true
 
-num-traits = { workspace = true }
-rayon = { workspace = true }
-fxhash = { workspace = true }
+num-traits.workspace = true
+rayon.workspace = true
+fxhash.workspace = true
 
-derive_more = { workspace = true }
-lazy_static = { workspace = true }
+derive_more.workspace = true
+lazy_static.workspace = true
 
 
-# nom = { workspace = true }
+# nom.workspace = true
 
 [dev-dependencies]
-divan = { workspace = true }
-rstest = { workspace = true }
+divan.workspace = true
+rstest.workspace = true
 
 [[bench]]
 name = "day12-bench"
