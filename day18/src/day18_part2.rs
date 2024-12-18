@@ -1,24 +1,91 @@
-use fxhash::FxHashSet;
+use fxhash::FxHashMap;
 use grid::{
-    grid_iteration::adjacent_cell,
-    grid_types::{Direction, Topology, UCoor2D},
+    grid_iteration::{adjacent_cell, all_adjacent_directions},
+    grid_types::{Direction, Neighborhood, Topology, UCoor2D},
 };
 use pathfinding::prelude::*;
 
-use miette::{Error, Result};
+use miette::{miette, Error, Result};
 
 //#[tracing::instrument]
 pub fn process(input: &str, width: usize) -> Result<String, Error> {
     //let width = 6+1;
 
-    let wall_coors = parse(input);
-    let previous_mid = binary_search(0, wall_coors.len(), |mid| {
-        find_path(width, mid, &wall_coors)
-    })
-    .unwrap();
-    let result = input.lines().nth(previous_mid).unwrap();
+    let maze = Maze::parse(input, width);
+    binary_search(0, maze.walls_with_time.len(), |mid| maze.find_path(mid))
+        .and_then(|found_time| input.lines().nth(found_time))
+        .map(ToString::to_string)
+        .ok_or(miette!("No path blocker found!"))
+}
 
-    Ok(result.to_string())
+#[derive(Debug)]
+struct Maze {
+    width: usize,
+    walls_with_time: FxHashMap<UCoor2D, usize>,
+}
+
+impl Maze {
+    fn parse(input: &str, width: usize) -> Maze {
+        let walls_with_time = input
+            .lines()
+            .enumerate()
+            .map(|(i, line)| {
+                let (x_str, y_str) = line.split_once(',').unwrap();
+
+                (
+                    UCoor2D::new(
+                        x_str.parse::<usize>().unwrap(),
+                        y_str.parse::<usize>().unwrap(),
+                    ),
+                    i,
+                )
+            })
+            .collect();
+        Maze {
+            width,
+            walls_with_time,
+        }
+    }
+
+    fn find_path(&self, time: usize) -> bool {
+        astar(
+            &self.coor_start(),
+            |coor| self.successors(coor, time),
+            |coor| self.heuristic(coor),
+            |coor| self.success(coor),
+        )
+        .is_some()
+    }
+
+    fn successors(&self, coor: &UCoor2D, time: usize) -> Vec<(UCoor2D, usize)> {
+        all_adjacent_directions(Neighborhood::Orthogonal)
+            .filter_map(|dir| {
+                adjacent_cell(Topology::Bounded, self.width, self.width, coor.clone(), dir)
+            })
+            .filter(|new_coor| !self.is_occupied_by_wall(new_coor, time))
+            .map(|new_coor| (new_coor, 1))
+            .collect()
+    }
+
+    fn is_occupied_by_wall(&self, new_coor: &UCoor2D, time: usize) -> bool {
+        self.walls_with_time
+            .get(new_coor)
+            .map_or(false, |wall_fall_time| wall_fall_time < &time)
+    }
+
+    fn success(&self, coor: &UCoor2D) -> bool {
+        *coor == self.coor_goal()
+    }
+
+    fn heuristic(&self, coor: &UCoor2D) -> usize {
+        coor.manhattan_distance(&self.coor_goal())
+    }
+    fn coor_goal(&self) -> UCoor2D {
+        UCoor2D::new(self.width - 1, self.width - 1)
+    }
+    fn coor_start(&self) -> UCoor2D {
+        UCoor2D::new(0, 0)
+    }
 }
 
 fn binary_search(
@@ -43,66 +110,6 @@ fn binary_search(
     } else {
         None
     }
-}
-
-fn parse(input: &str) -> Vec<UCoor2D> {
-    input
-        .lines()
-        .map(|line| {
-            let (x_str, y_str) = line.split_once(',').unwrap();
-
-            UCoor2D::new(
-                x_str.parse::<usize>().unwrap(),
-                y_str.parse::<usize>().unwrap(),
-            )
-        })
-        .collect()
-}
-
-fn create_wall_set(bytes_to_take: usize, wall_coors: &[UCoor2D]) -> FxHashSet<&UCoor2D> {
-    wall_coors.iter().take(bytes_to_take).collect()
-}
-
-fn find_path(width: usize, bytes_to_take: usize, wall_coors: &[UCoor2D]) -> bool {
-    let wall_set: FxHashSet<&UCoor2D> = create_wall_set(bytes_to_take, wall_coors);
-    let result = astar(
-        &UCoor2D::new(0, 0),
-        |coor| successors_wall_set(coor, width, &wall_set),
-        |coor| heuristic_wall_set(coor, width),
-        |coor| success_wall_set(coor, width),
-    );
-    //println!("{:?} {:?} {:?}", bytes_to_take, input.lines().nth(bytes_to_take-1).unwrap(), result.clone().and_then(|r| Some(r.1)));
-    result.is_some()
-}
-
-fn successors_wall_set(
-    coor: &UCoor2D,
-    width: usize,
-    wall_set: &FxHashSet<&UCoor2D>,
-) -> Vec<(UCoor2D, usize)> {
-    vec![
-        Direction::West,
-        Direction::East,
-        Direction::South,
-        Direction::North,
-    ]
-    .into_iter()
-    .filter_map(|dir| adjacent_cell(Topology::Bounded, width, width, coor.clone(), dir))
-    .filter(|new_coor| !wall_set.contains(new_coor))
-    .map(|new_coor| (new_coor, 1))
-    .collect()
-}
-
-fn success_wall_set(coor: &UCoor2D, width: usize) -> bool {
-    *coor == end_coor_wall_set(width)
-}
-
-fn end_coor_wall_set(width: usize) -> UCoor2D {
-    UCoor2D::new(width - 1, width - 1)
-}
-
-fn heuristic_wall_set(coor: &UCoor2D, width: usize) -> usize {
-    coor.manhattan_distance(&end_coor_wall_set(width))
 }
 
 #[cfg(test)]
