@@ -1,42 +1,48 @@
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::FxHashSet;
 use grid::{
-    grid_hashmap::GridHashMap,
     grid_iteration::adjacent_cell,
-    grid_types::{Direction, Neighborhood, Topology, UCoor2D},
+    grid_types::{Direction, Topology, UCoor2D},
 };
-use itertools::Itertools;
-use num_traits::ToPrimitive;
 use pathfinding::prelude::*;
-use rayon::prelude::*;
 
-use miette::{miette, Error, Result};
+use miette::{Error, Result};
 
 //#[tracing::instrument]
-pub fn process(input: &str, width: usize) -> std::result::Result<String, Error> {
+pub fn process(input: &str, width: usize) -> Result<String, Error> {
     //let width = 6+1;
-    let mut lower_end = 0;
-    let mut upper_end = input.lines().count();
-    let mut previous_mid = 0;
 
     let wall_coors = parse(input);
+    let previous_mid = binary_search(0, wall_coors.len(), |mid| {
+        find_path(width, mid, &wall_coors)
+    })
+    .unwrap();
+    let result = input.lines().nth(previous_mid).unwrap();
 
-    loop {
+    Ok(result.to_string())
+}
+
+fn binary_search(
+    lower_end: usize,
+    upper_end: usize,
+    match_fn: impl Fn(usize) -> bool,
+) -> Option<usize> {
+    let mut lower_end = lower_end;
+    let mut upper_end = upper_end;
+
+    while lower_end < upper_end {
         let mid = (lower_end + upper_end) / 2;
-        //println!("[{lower_end}-{mid}-{upper_end}]");
-
-        if find_path(width, mid, &wall_coors) {
-            lower_end = mid;
+        if match_fn(mid) {
+            lower_end = mid + 1;
         } else {
             upper_end = mid;
-        };
-        if previous_mid == mid {
-            break;
         }
-        previous_mid = mid;
     }
 
-    let result = input.lines().nth(previous_mid).unwrap();
-    Ok(result.to_string())
+    if match_fn(upper_end - 1) {
+        Some(upper_end - 1)
+    } else {
+        None
+    }
 }
 
 fn parse(input: &str) -> Vec<UCoor2D> {
@@ -53,12 +59,12 @@ fn parse(input: &str) -> Vec<UCoor2D> {
         .collect()
 }
 
-fn create_wall_set(bytes_to_take: usize, wall_coors: &[UCoor2D]) -> FxHashSet<UCoor2D> {
-    wall_coors.iter().take(bytes_to_take).cloned().collect()
+fn create_wall_set(bytes_to_take: usize, wall_coors: &[UCoor2D]) -> FxHashSet<&UCoor2D> {
+    wall_coors.iter().take(bytes_to_take).collect()
 }
 
 fn find_path(width: usize, bytes_to_take: usize, wall_coors: &[UCoor2D]) -> bool {
-    let wall_set: FxHashSet<&UCoor2D> = wall_coors.iter().take(bytes_to_take).collect();
+    let wall_set: FxHashSet<&UCoor2D> = create_wall_set(bytes_to_take, wall_coors);
     let result = astar(
         &UCoor2D::new(0, 0),
         |coor| successors_wall_set(coor, width, &wall_set),

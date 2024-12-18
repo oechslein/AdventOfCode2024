@@ -1,18 +1,14 @@
-use fxhash::{FxHashMap, FxHashSet};
 use grid::{
     grid_array::{GridArray, GridArrayBuilder},
-    grid_hashmap::GridHashMap,
     grid_types::{Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
-use num_traits::ToPrimitive;
 use pathfinding::prelude::*;
-use rayon::prelude::*;
 
-use miette::{miette, Error, Result};
+use miette::{Error, Result};
 
 //#[tracing::instrument]
-pub fn process(input: &str, width: usize, bytes_to_take: usize) -> std::result::Result<String, Error> {
+pub fn process(input: &str, width: usize, bytes_to_take: usize) -> Result<String, Error> {
     let mut grid = GridArrayBuilder::default().topology(Topology::Bounded).neighborhood(
         Neighborhood::Orthogonal).width(width).height(width).build().unwrap();
 
@@ -32,10 +28,8 @@ pub fn process(input: &str, width: usize, bytes_to_take: usize) -> std::result::
     }
     //grid.println(false);
 
-    let start_coor = UCoor2D::new(0, 0);
-
     let result = astar(
-        &start_coor,
+        &UCoor2D::new(0, 0),
         |coor| successors(coor, &grid),
         |coor| heuristic(coor, &grid),
         |coor| success(coor, &grid),
