@@ -8,15 +8,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'day17_part1'",
+            "name": "Debug executable 'day18_part1'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day17_part1",
-                    "--package=day17"
+                    "--bin=day18_part1",
+                    "--package=day18"
                 ],
                 "filter": {
-                    "name": "day17_part1",
+                    "name": "day18_part1",
                     "kind": "bin"
                 }
             },
@@ -27,15 +27,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'day17_part2'",
+            "name": "Debug executable 'day18_part2'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=day17_part2",
-                    "--package=day17"
+                    "--bin=day18_part2",
+                    "--package=day18"
                 ],
                 "filter": {
-                    "name": "day17_part2",
+                    "name": "day18_part2",
                     "kind": "bin"
                 }
             },
