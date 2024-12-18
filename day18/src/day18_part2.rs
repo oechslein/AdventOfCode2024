@@ -1,7 +1,7 @@
 use fxhash::FxHashMap;
 use grid::{
     grid_iteration::{adjacent_cell, all_adjacent_directions},
-    grid_types::{Direction, Neighborhood, Topology, UCoor2D},
+    grid_types::{Neighborhood, Topology, UCoor2D},
 };
 use pathfinding::prelude::*;
 
@@ -49,7 +49,7 @@ impl Maze {
 
     fn find_path(&self, time: usize) -> bool {
         astar(
-            &self.coor_start(),
+            &UCoor2D::new(0, 0),
             |coor| self.successors(coor, time),
             |coor| self.heuristic(coor),
             |coor| self.success(coor),
@@ -82,9 +82,6 @@ impl Maze {
     }
     fn coor_goal(&self) -> UCoor2D {
         UCoor2D::new(self.width - 1, self.width - 1)
-    }
-    fn coor_start(&self) -> UCoor2D {
-        UCoor2D::new(0, 0)
     }
 }
 
