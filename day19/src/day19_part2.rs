@@ -1,12 +1,11 @@
-use std::sync::{LazyLock, Mutex};
-
 use fxhash::FxHashMap;
 use itertools::Itertools;
 use rayon::prelude::*;
 
 use miette::{miette, Result};
 
-//#[tracing::instrument]
+use crate::cache_it;
+
 pub fn process(input: &str) -> Result<String> {
     let (patterns, towels) = input.split_once("\n\n").ok_or(miette!("Invalid input"))?;
     let patterns = patterns.split(", ").collect_vec();
@@ -19,29 +18,12 @@ pub fn process(input: &str) -> Result<String> {
 }
 
 pub fn count_matching_pattern_combinations_cached(towel: &str, patterns: &Vec<&str>) -> usize {
-    // LazyLock to initialize a static Mutex<FxHashMap<String, usize>>
-    // Mutex to lock the FxHashMap because of the Rayon parallel iterator
-    static CACHE: LazyLock<Mutex<FxHashMap<String, usize>>> =
-        LazyLock::new(|| Mutex::new(FxHashMap::default()));
-
-    let key = towel.to_string();
-    // Lock the cache in this block
-    {
-        let cache = CACHE.lock().unwrap();
-        if let Some(counts) = cache.get(&key) {
-            return *counts;
-        }
-    }
-
-    let counts = count_matching_pattern_combinations(towel, patterns);
-
-    // Lock the cache in this block
-    {
-        let mut cache = CACHE.lock().unwrap();
-        cache.insert(key, counts);
-
-        counts
-    }
+    cache_it!(
+        FxHashMap<String, usize>,
+        FxHashMap::default(),
+        towel.to_string(),
+        count_matching_pattern_combinations(towel, patterns)
+    )
 }
 
 fn count_matching_pattern_combinations(towel: &str, patterns: &Vec<&str>) -> usize {

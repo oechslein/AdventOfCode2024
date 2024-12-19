@@ -14,5 +14,6 @@
     clippy::bool_to_int_with_if
 )]
 
+mod cache_it_macro;
 pub mod day19_part1;
 pub mod day19_part2;

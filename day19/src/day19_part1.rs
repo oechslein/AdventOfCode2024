@@ -1,53 +1,40 @@
-use fxhash::FxHashSet;
+use fxhash::FxHashMap;
 use itertools::Itertools;
 
 use miette::{miette, Result};
+
+use crate::cache_it;
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
     let (patterns, towels) = input.split_once("\n\n").ok_or(miette!("Invalid input"))?;
     let patterns = patterns.split(", ").collect_vec();
-    let mut miss_matching_patterns: FxHashSet<_> = FxHashSet::default();
     let result = towels
         .lines()
-        //.par_bridge()
-        .filter(|towel| is_matching_any_pattern(towel, &patterns, &mut miss_matching_patterns))
+        .filter(|towel| is_matching_any_pattern_cached(towel, &patterns))
         .count();
     Ok(result.to_string())
 }
 
-fn is_matching_any_pattern(
-    towel: &str,
-    patterns: &Vec<&str>,
-    miss_matching_patterns: &mut FxHashSet<String>,
-) -> bool {
+fn is_matching_any_pattern_cached(towel: &str, patterns: &Vec<&str>) -> bool {
+    cache_it!(
+        FxHashMap<String, bool>,
+        FxHashMap::default(),
+        towel.to_string(),
+        is_matching_any_pattern(towel, patterns)
+    )
+}
+
+fn is_matching_any_pattern(towel: &str, patterns: &Vec<&str>) -> bool {
     if towel.is_empty() {
         return true;
     }
-    if miss_matching_patterns.contains(towel) {
-        return false;
-    }
-    let matched = patterns
-        .iter()
-        .any(|pattern| is_matching_pattern(towel, pattern, patterns, miss_matching_patterns));
-    if !matched {
-        miss_matching_patterns.insert(towel.to_string());
-    }
+    let matched = patterns.iter().any(|pattern| {
+        towel.starts_with(pattern)
+            && is_matching_any_pattern_cached(&towel[pattern.len()..], patterns)
+    });
 
     matched
-}
-
-fn is_matching_pattern(
-    towel: &str,
-    pattern: &str,
-    patterns: &Vec<&str>,
-    miss_matching_patterns: &mut FxHashSet<String>,
-) -> bool {
-    if !towel.starts_with(pattern) {
-        return false;
-    }
-
-    is_matching_any_pattern(&towel[pattern.len()..], patterns, miss_matching_patterns)
 }
 
 #[cfg(test)]
