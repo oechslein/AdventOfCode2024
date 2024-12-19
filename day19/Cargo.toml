@@ -1,0 +1,37 @@
+[package]
+name = "day19"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+utils = { path = "../utils" }
+# grid = { path = "../grid/" }
+# range_set = { path = "../range_set/" }
+
+tracing.workspace = true
+tracing-subscriber.workspace = true
+miette.workspace = true
+thiserror.workspace = true
+# dhat.workspace = true
+
+itertools.workspace = true
+
+num-traits.workspace = true
+rayon.workspace = true
+fxhash.workspace = true
+
+# nom.workspace = true
+
+[dev-dependencies]
+divan.workspace = true
+rstest.workspace = true
+
+[[bench]]
+name = "day19-bench"
+path = "benches/benchmarks.rs"
+harness = false
+
+[features]
+dhat-heap = []
