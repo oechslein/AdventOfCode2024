@@ -1,10 +1,8 @@
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
-use cached::{cached_key, Cached, SizedCache, UnboundCache};
+use fxhash::FxHashMap;
 use itertools::Itertools;
 use rayon::prelude::*;
-
-use cached::once_cell::sync::Lazy;
 
 use miette::{miette, Result};
 
@@ -20,22 +18,27 @@ pub fn process(input: &str) -> Result<String> {
     Ok(result.to_string())
 }
 
-static CACHE: Lazy<Mutex<UnboundCache<String, usize>>> =
-    Lazy::new(|| Mutex::new(UnboundCache::new()));
 pub fn count_matching_pattern_combinations_cached(towel: &str, patterns: &Vec<&str>) -> usize {
+    // LazyLock to initialize a static Mutex<FxHashMap<String, usize>>
+    // Mutex to lock the FxHashMap because of the Rayon parallel iterator
+    static CACHE: LazyLock<Mutex<FxHashMap<String, usize>>> =
+        LazyLock::new(|| Mutex::new(FxHashMap::default()));
+
     let key = towel.to_string();
+    // Lock the cache in this block
     {
-        let mut cache = CACHE.lock().unwrap();
-        if let Some(counts) = Cached::cache_get(&mut *cache, &key) {
+        let cache = CACHE.lock().unwrap();
+        if let Some(counts) = cache.get(&key) {
             return *counts;
         }
     }
 
     let counts = count_matching_pattern_combinations(towel, patterns);
 
+    // Lock the cache in this block
     {
         let mut cache = CACHE.lock().unwrap();
-        Cached::cache_set(&mut *cache, key, counts);
+        cache.insert(key, counts);
 
         counts
     }
@@ -43,16 +46,16 @@ pub fn count_matching_pattern_combinations_cached(towel: &str, patterns: &Vec<&s
 
 fn count_matching_pattern_combinations(towel: &str, patterns: &Vec<&str>) -> usize {
     if towel.is_empty() {
-        return 1;
+        1
+    } else {
+        patterns
+            .par_iter()
+            .filter(|&pattern| towel.starts_with(pattern))
+            .map(|pattern| {
+                count_matching_pattern_combinations_cached(&towel[pattern.len()..], patterns)
+            })
+            .sum::<usize>()
     }
-
-    patterns
-        .par_iter()
-        .filter(|&pattern| towel.starts_with(pattern))
-        .map(|pattern| {
-            count_matching_pattern_combinations_cached(&towel[pattern.len()..], patterns)
-        })
-        .sum::<usize>()
 }
 
 #[cfg(test)]
