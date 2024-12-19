@@ -1,9 +1,7 @@
-use fxhash::{FxHashMap, FxHashSet};
+use fxhash::FxHashSet;
 use itertools::Itertools;
-use num_traits::ToPrimitive;
-use rayon::prelude::*;
 
-use miette::{miette, Error, Result};
+use miette::{miette, Result};
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {

@@ -1,7 +1,7 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_must_use)]
-//#![warn(clippy::all, clippy::pedantic)]
+//#![allow(unused_imports)]
+//#![allow(dead_code)]
+//#![allow(unused_must_use)]
+#![warn(clippy::all, clippy::pedantic)]
 #![allow(
     clippy::enum_glob_use,
     clippy::many_single_char_names,
@@ -11,9 +11,8 @@
     clippy::missing_panics_doc,
     clippy::doc_markdown,
     clippy::module_name_repetitions,
-    clippy::bool_to_int_with_if,
+    clippy::bool_to_int_with_if
 )]
-
 
 pub mod day19_part1;
 pub mod day19_part2;
