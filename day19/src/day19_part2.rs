@@ -1,23 +1,47 @@
-use cached::proc_macro::cached;
+use std::sync::Mutex;
+
+use cached::{cached_key, Cached, SizedCache, UnboundCache};
 use itertools::Itertools;
 use rayon::prelude::*;
+
+use cached::once_cell::sync::Lazy;
 
 use miette::{miette, Result};
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
     let (patterns, towels) = input.split_once("\n\n").ok_or(miette!("Invalid input"))?;
-    let patterns = patterns.split(", ").map(ToString::to_string).collect_vec();
+    let patterns = patterns.split(", ").collect_vec();
     let result = towels
         .lines()
         .par_bridge()
-        .map(|towel| count_matching_pattern_combinations(towel.to_string(), patterns.clone()))
+        .map(|towel| count_matching_pattern_combinations_cached(towel, &patterns))
         .sum::<usize>();
     Ok(result.to_string())
 }
 
-#[cached]
-fn count_matching_pattern_combinations(towel: String, patterns: Vec<String>) -> usize {
+static CACHE: Lazy<Mutex<UnboundCache<String, usize>>> =
+    Lazy::new(|| Mutex::new(UnboundCache::new()));
+pub fn count_matching_pattern_combinations_cached(towel: &str, patterns: &Vec<&str>) -> usize {
+    let key = towel.to_string();
+    {
+        let mut cache = CACHE.lock().unwrap();
+        if let Some(counts) = Cached::cache_get(&mut *cache, &key) {
+            return *counts;
+        }
+    }
+
+    let counts = count_matching_pattern_combinations(towel, patterns);
+
+    {
+        let mut cache = CACHE.lock().unwrap();
+        Cached::cache_set(&mut *cache, key, counts);
+
+        counts
+    }
+}
+
+fn count_matching_pattern_combinations(towel: &str, patterns: &Vec<&str>) -> usize {
     if towel.is_empty() {
         return 1;
     }
@@ -26,10 +50,7 @@ fn count_matching_pattern_combinations(towel: String, patterns: Vec<String>) -> 
         .par_iter()
         .filter(|&pattern| towel.starts_with(pattern))
         .map(|pattern| {
-            count_matching_pattern_combinations(
-                towel[pattern.len()..].to_string(),
-                patterns.clone(),
-            )
+            count_matching_pattern_combinations_cached(&towel[pattern.len()..], patterns)
         })
         .sum::<usize>()
 }
