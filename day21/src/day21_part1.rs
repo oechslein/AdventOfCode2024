@@ -1,10 +1,8 @@
-use fxhash::FxHashMap;
 use grid::{
     grid_array::GridArray,
     grid_types::{Direction, Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
-use num_traits::ToPrimitive;
 use pathfinding::prelude::dijkstra;
 use rayon::prelude::*;
 
@@ -13,7 +11,7 @@ use std::{
     str::FromStr,
 };
 
-use miette::{miette, Error, Result};
+use miette::{Error, Result};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Action {
@@ -21,20 +19,22 @@ enum Action {
     Press,
 }
 
+impl Action {
+    fn to_char(&self) -> char {
+        match self {
+            Action::Move(dir) if *dir == Direction::North => '^',
+            Action::Move(dir) if *dir == Direction::South => 'v',
+            Action::Move(dir) if *dir == Direction::West => '<',
+            Action::Move(dir) if *dir == Direction::East => '>',
+            Action::Press => 'A',
+            Action::Move(dir) => panic!("Invalid move action: {dir:?}"),
+        }
+    }
+}
+
 impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Action::Move(dir) if *dir == Direction::North => "^",
-                Action::Move(dir) if *dir == Direction::South => "v",
-                Action::Move(dir) if *dir == Direction::West => "<",
-                Action::Move(dir) if *dir == Direction::East => ">",
-                Action::Press => "A",
-                Action::Move(dir) => panic!("Invalid move action: {dir:?}"),
-            }
-        )
+        write!(f, "{}", self.to_char())
     }
 }
 
@@ -314,26 +314,7 @@ fn solve(
 
     let result = result.unwrap();
 
-    let action_str2 = result
-        .0
-        .iter()
-        .filter(|state| state.last_action == Some(Action::Press))
-        .map(|state| directional_keypad_grid.get_unchecked(state.pos.x, state.pos.y))
-        .join("");
-
-    let action_str = result
-        .0
-        .into_iter()
-        .filter_map(|state| state.last_action)
-        .join("");
-    // println!("{}: {} ---- {}", goal, action_str, action_str2);
-
-    let numeric_part: usize = goal
-        .chars()
-        .filter_map(|ch| ch.to_digit(10))
-        .join("")
-        .parse()
-        .unwrap();
+    let numeric_part: usize = goal.trim_end_matches('A').parse::<usize>().unwrap();
 
     let min_length = result.1;
     (numeric_part, min_length)
