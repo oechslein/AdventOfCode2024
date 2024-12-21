@@ -5,7 +5,7 @@ use grid::{
 };
 use itertools::Itertools;
 use num_traits::ToPrimitive;
-use pathfinding::prelude::{astar_bag, dijkstra};
+use pathfinding::prelude::dijkstra;
 use rayon::prelude::*;
 
 use std::{
@@ -296,7 +296,7 @@ fn solve(
     goal: &str,
 ) -> (usize, usize) {
     let directional_keypad_state = directional_keypad_state.clone();
-    let result = astar_bag(
+    let result = dijkstra(
         &directional_keypad_state,
         |directional_keypad_state| {
             directional_keypad_state
@@ -309,7 +309,6 @@ fn solve(
                 })
                 .collect_vec()
         },
-        |directional_keypad_state| 0,
         |directional_keypad_state| directional_keypad_state.get_pressed_key() == *goal,
     );
 
@@ -327,7 +326,7 @@ fn solve(
         .into_iter()
         .filter_map(|state| state.last_action)
         .join("");
-    println!("{}: {} ---- {}", goal, action_str, action_str2);
+    // println!("{}: {} ---- {}", goal, action_str, action_str2);
 
     let numeric_part: usize = goal
         .chars()
