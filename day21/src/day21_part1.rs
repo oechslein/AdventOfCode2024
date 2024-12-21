@@ -59,10 +59,12 @@ trait KeyPadState: Display + FmtDebug + Clone + PartialEq {
     fn get_valid_actions(&self, keypad_grid: &GridArray<char>) -> Vec<Action>;
 }
 
+////////////////////////////////////////////////////////////////////////////////////
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct NumericKeyPadState {
     pos: UCoor2D,
     pressed: Vec<char>,
+    goal_str: String,
 }
 
 impl Display for NumericKeyPadState {
@@ -77,10 +79,11 @@ impl Display for NumericKeyPadState {
 }
 
 impl NumericKeyPadState {
-    fn new(pos: UCoor2D) -> Self {
+    fn new(pos: UCoor2D, goal_str: String) -> Self {
         Self {
             pos,
             pressed: Vec::new(),
+            goal_str,
         }
     }
 }
@@ -111,9 +114,20 @@ impl KeyPadState for NumericKeyPadState {
     }
 
     fn get_valid_actions(&self, numeric_keypad_grid: &GridArray<char>) -> Vec<Action> {
+        if !self.goal_str.starts_with(&self.get_pressed_key()) {
+            return vec![];
+        }
         if self.pressed.len() == 4 {
             return vec![];
         }
+
+        let key = *numeric_keypad_grid.get_unchecked(self.pos.x, self.pos.y);
+        let press_possible = self.goal_str.chars().nth(self.pressed.len()).unwrap_or(' ') == key;
+
+        if press_possible {
+            return vec![Action::Press];
+        }
+
         let mut actions = numeric_keypad_grid
             .neighborhood_cells(self.pos.x, self.pos.y)
             .filter(|(_coor, &ch)| ch != ' ')
@@ -191,6 +205,16 @@ impl<T: KeyPadState> KeyPadState for DirectionalKeyPadState<T> {
     }
 
     fn get_valid_actions(&self, directional_keypad_grid: &GridArray<char>) -> Vec<Action> {
+        let inner_pressed_key = self.inner_state.get_pressed_key();
+        let inner_pressed_key_len = inner_pressed_key.len();
+        if inner_pressed_key
+            .rfind('A')
+            .unwrap_or(inner_pressed_key_len)
+            > 4
+        {
+            return vec![Action::Press];
+        }
+
         let mut actions = directional_keypad_grid
             .neighborhood_cells(self.pos.x, self.pos.y)
             .filter(|(_coor, &ch)| "<^v>A".contains(ch))
@@ -219,45 +243,34 @@ impl<T: KeyPadState> KeyPadState for DirectionalKeyPadState<T> {
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
-    let numerical_keypad_grid = GridArray::from_newline_separated_string(
-        Topology::Bounded,
-        Neighborhood::Orthogonal,
-        "789\n456\n123\n 0A",
-    );
-    let directional_keypad_grid = GridArray::from_newline_separated_string(
-        Topology::Bounded,
-        Neighborhood::Orthogonal,
-        " ^A\n<v>",
-    );
-
-    let numerical_keypad_state = NumericKeyPadState::new(UCoor2D::new(2, 3));
-    let inner_directional_keypad_state = DirectionalKeyPadState::new(
-        UCoor2D::new(2, 0),
-        numerical_keypad_state,
-        numerical_keypad_grid,
-    );
-    let directional_keypad_state = DirectionalKeyPadState::new(
-        UCoor2D::new(2, 0),
-        inner_directional_keypad_state,
-        directional_keypad_grid.clone(),
-    );
-
-    // let moves = "<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A";
-    // for curr_move in moves.chars() {
-    //     let action = Action::from_str(&curr_move.to_string())?;
-    //     directional_keypad_state =
-    //         directional_keypad_state.execute_action(action, &directional_keypad_grid);
-    // }
-
-    // println!(
-    //     "{directional_keypad_state}\n{:?}",
-    //     directional_keypad_state.get_valid_actions(&directional_keypad_grid)
-    // );
-
     let result: usize = input
         .lines()
         .par_bridge()
         .map(|goal| {
+            let numerical_keypad_grid = GridArray::from_newline_separated_string(
+                Topology::Bounded,
+                Neighborhood::Orthogonal,
+                "789\n456\n123\n 0A",
+            );
+            let directional_keypad_grid = GridArray::from_newline_separated_string(
+                Topology::Bounded,
+                Neighborhood::Orthogonal,
+                " ^A\n<v>",
+            );
+
+            let numerical_keypad_state =
+                NumericKeyPadState::new(UCoor2D::new(2, 3), goal.to_string());
+            let inner_directional_keypad_state = DirectionalKeyPadState::new(
+                UCoor2D::new(2, 0),
+                numerical_keypad_state,
+                numerical_keypad_grid,
+            );
+            let directional_keypad_state = DirectionalKeyPadState::new(
+                UCoor2D::new(2, 0),
+                inner_directional_keypad_state,
+                directional_keypad_grid.clone(),
+            );
+
             let (numeric_part, min_length) =
                 solve(&directional_keypad_grid, &directional_keypad_state, goal);
 
