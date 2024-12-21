@@ -5,7 +5,7 @@ use grid::{
 };
 use itertools::Itertools;
 use num_traits::ToPrimitive;
-use pathfinding::prelude::dijkstra;
+use pathfinding::prelude::{astar_bag, dijkstra};
 use rayon::prelude::*;
 
 use std::{
@@ -145,6 +145,7 @@ struct DirectionalKeyPadState<T: KeyPadState> {
     pos: UCoor2D,
     inner_state: T,
     inner_keypad_grid: GridArray<char>,
+    last_action: Option<Action>,
 }
 
 impl<T: KeyPadState> Display for DirectionalKeyPadState<T> {
@@ -159,6 +160,7 @@ impl<T: KeyPadState> DirectionalKeyPadState<T> {
             pos,
             inner_state,
             inner_keypad_grid,
+            last_action: None,
         }
     }
 }
@@ -169,6 +171,7 @@ impl<T: KeyPadState> KeyPadState for DirectionalKeyPadState<T> {
             .get_valid_actions(directional_keypad_grid)
             .contains(&action));
         let mut new_state = self.clone();
+        new_state.last_action = Some(action.clone());
         match action {
             Action::Move(Direction::North) => new_state.pos.y -= 1,
             Action::Move(Direction::South) => new_state.pos.y += 1,
@@ -215,6 +218,11 @@ impl<T: KeyPadState> KeyPadState for DirectionalKeyPadState<T> {
             return vec![Action::Press];
         }
 
+        let inner_state_actions = self.inner_state.get_valid_actions(&self.inner_keypad_grid);
+        if inner_state_actions.is_empty() {
+            return vec![];
+        }
+
         let mut actions = directional_keypad_grid
             .neighborhood_cells(self.pos.x, self.pos.y)
             .filter(|(_coor, &ch)| "<^v>A".contains(ch))
@@ -222,24 +230,25 @@ impl<T: KeyPadState> KeyPadState for DirectionalKeyPadState<T> {
             .collect_vec();
 
         let key = *directional_keypad_grid.get_unchecked(self.pos.x, self.pos.y);
-        let press_possible = self
-            .inner_state
-            .get_valid_actions(&self.inner_keypad_grid)
-            .iter()
-            .any(|inner_action| match inner_action {
-                Action::Move(dir) if *dir == Direction::North && key == '^' => true,
-                Action::Move(dir) if *dir == Direction::South && key == 'v' => true,
-                Action::Move(dir) if *dir == Direction::West && key == '<' => true,
-                Action::Move(dir) if *dir == Direction::East && key == '>' => true,
-                Action::Press if key == 'A' => true,
-                _ => false,
-            });
+        let press_possible =
+            inner_state_actions
+                .into_iter()
+                .any(|inner_action| match inner_action {
+                    Action::Move(dir) if dir == Direction::North && key == '^' => true,
+                    Action::Move(dir) if dir == Direction::South && key == 'v' => true,
+                    Action::Move(dir) if dir == Direction::West && key == '<' => true,
+                    Action::Move(dir) if dir == Direction::East && key == '>' => true,
+                    Action::Press if key == 'A' => true,
+                    _ => false,
+                });
         if press_possible {
             actions.push(Action::Press);
         }
         actions
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
@@ -287,7 +296,7 @@ fn solve(
     goal: &str,
 ) -> (usize, usize) {
     let directional_keypad_state = directional_keypad_state.clone();
-    let result = dijkstra(
+    let result = astar_bag(
         &directional_keypad_state,
         |directional_keypad_state| {
             directional_keypad_state
@@ -300,8 +309,25 @@ fn solve(
                 })
                 .collect_vec()
         },
+        |directional_keypad_state| 0,
         |directional_keypad_state| directional_keypad_state.get_pressed_key() == *goal,
     );
+
+    let result = result.unwrap();
+
+    let action_str2 = result
+        .0
+        .iter()
+        .filter(|state| state.last_action == Some(Action::Press))
+        .map(|state| directional_keypad_grid.get_unchecked(state.pos.x, state.pos.y))
+        .join("");
+
+    let action_str = result
+        .0
+        .into_iter()
+        .filter_map(|state| state.last_action)
+        .join("");
+    println!("{}: {} ---- {}", goal, action_str, action_str2);
 
     let numeric_part: usize = goal
         .chars()
@@ -309,7 +335,8 @@ fn solve(
         .join("")
         .parse()
         .unwrap();
-    let min_length = result.unwrap().1;
+
+    let min_length = result.1;
     (numeric_part, min_length)
 }
 
