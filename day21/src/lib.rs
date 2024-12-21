@@ -15,5 +15,6 @@
 )]
 
 mod cache_it_macro;
+mod day21;
 pub mod day21_part1;
 pub mod day21_part2;
