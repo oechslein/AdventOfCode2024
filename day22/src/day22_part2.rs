@@ -5,10 +5,10 @@ use rayon::prelude::*;
 
 use miette::{miette, Error, Result};
 
-type NumberType = usize;
+type NumberType = i32;
 type PriceType = u8;
 type ChangesType = i8;
-type SequenceType = (ChangesType, ChangesType, ChangesType, ChangesType);
+type SequenceType = [ChangesType; 4];
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
@@ -40,7 +40,15 @@ pub fn process(input: &str) -> Result<String> {
     Ok(result.to_string())
 }
 
-fn get_all_possible_changes_map(secret: usize) -> FxHashMap<SequenceType, PriceType> {
+fn next_secret(secret: NumberType) -> NumberType {
+    let mask = (1 << 24) - 1;
+    let secret = (secret ^ (secret << 6)) & mask;
+    let secret = (secret ^ (secret >> 5)) & mask;
+    let secret = (secret ^ (secret << 11)) & mask;
+    secret
+}
+
+fn get_all_possible_changes_map(secret: NumberType) -> FxHashMap<SequenceType, PriceType> {
     let mut all_possible_changes: FxHashMap<SequenceType, PriceType> = FxHashMap::default();
     for (changes, price) in all_secrets_tuple_changes_and_price(secret) {
         all_possible_changes.entry(changes).or_insert(price);
@@ -48,40 +56,18 @@ fn get_all_possible_changes_map(secret: usize) -> FxHashMap<SequenceType, PriceT
     all_possible_changes
 }
 
-fn all_steps(secret: usize) -> usize {
-    step_three(step_two(step_one(secret)))
-}
-
-fn step_one(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret << 6))
-}
-
-fn prune(secret: NumberType) -> NumberType {
-    secret & ((1 << 24) - 1)
-}
-
-fn mix(secret: NumberType, new_secret: NumberType) -> NumberType {
-    secret ^ new_secret
-}
-
-fn step_two(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret >> 5))
-}
-
-fn step_three(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret << 11))
-}
-
-fn all_secrets(secret: usize) -> impl Iterator<Item = usize> {
+fn all_secrets(secret: NumberType) -> impl Iterator<Item = NumberType> {
     (0..2000).scan(secret, |acc, _i| {
         let old_secret = *acc;
-        let new_secret = all_steps(old_secret);
+        let new_secret = next_secret(old_secret);
         *acc = new_secret;
         Some(old_secret)
     })
 }
 
-fn all_secrets_changes_and_prices(secret: usize) -> impl Iterator<Item = (ChangesType, PriceType)> {
+fn all_secrets_changes_and_prices(
+    secret: NumberType,
+) -> impl Iterator<Item = (ChangesType, PriceType)> {
     all_secrets(secret)
         .map(|s| (s % 10) as PriceType)
         .tuple_windows()
@@ -93,8 +79,8 @@ fn all_secrets_changes_and_prices(secret: usize) -> impl Iterator<Item = (Change
 
 fn calc_price(secret: NumberType, sequence: SequenceType) -> PriceType {
     all_secrets_tuple_changes_and_price(secret)
-        .filter_map(|((change_a, change_b, change_c, change_d), price_d)| {
-            if (change_a, change_b, change_c, change_d) == sequence {
+        .filter_map(|([change_a, change_b, change_c, change_d], price_d)| {
+            if [change_a, change_b, change_c, change_d] == sequence {
                 Some(price_d)
             } else {
                 None
@@ -105,11 +91,11 @@ fn calc_price(secret: NumberType, sequence: SequenceType) -> PriceType {
 }
 
 fn all_secrets_tuple_changes_and_price(
-    secret: usize,
+    secret: NumberType,
 ) -> impl Iterator<Item = (SequenceType, PriceType)> {
     all_secrets_changes_and_prices(secret).tuple_windows().map(
         |((change_a, _), (change_b, _), (change_c, _), (change_d, price_d))| {
-            ((change_a, change_b, change_c, change_d), price_d)
+            ([change_a, change_b, change_c, change_d], price_d)
         },
     )
 }
@@ -118,11 +104,10 @@ fn all_secrets_tuple_changes_and_price(
 mod tests {
     use super::*;
 
-    #[test]
     fn test1() -> miette::Result<()> {
-        assert_eq!(6, calc_price(123, (-1, -1, 0, 2)));
+        assert_eq!(6, calc_price(123, [-1, -1, 0, 2]));
 
-        let sequence = (-2, 1, -1, 3);
+        let sequence = [-2, 1, -1, 3];
         assert_eq!(7, calc_price(1, sequence));
         assert_eq!(7, calc_price(2, sequence));
         assert_eq!(0, calc_price(3, sequence));

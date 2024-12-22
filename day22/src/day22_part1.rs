@@ -21,28 +21,13 @@ pub fn process(input: &str) -> Result<String> {
 }
 
 fn all_steps(secret: usize) -> usize {
-    step_three(step_two(step_one(secret)))
+    let mask = (1 << 24) - 1;
+    let secret = (secret ^ (secret << 6)) & mask;
+    let secret = (secret ^ (secret >> 5)) & mask;
+    let secret = (secret ^ (secret << 11)) & mask;
+    secret
 }
 
-fn step_one(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret << 6))
-}
-
-fn prune(secret: NumberType) -> NumberType {
-    secret & ((1 << 24) - 1)
-}
-
-fn mix(secret: NumberType, new_secret: NumberType) -> NumberType {
-    secret ^ new_secret
-}
-
-fn step_two(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret >> 5))
-}
-
-fn step_three(secret: NumberType) -> NumberType {
-    prune(mix(secret, secret << 11))
-}
 #[cfg(test)]
 mod tests {
     use super::*;
