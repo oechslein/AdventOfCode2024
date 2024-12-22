@@ -1,9 +1,6 @@
-use fxhash::FxHashMap;
-use itertools::Itertools;
-use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-use miette::{miette, Error, Result};
+use miette::Result;
 
 type NumberType = usize;
 
@@ -24,8 +21,7 @@ fn all_steps(secret: usize) -> usize {
     let mask = (1 << 24) - 1;
     let secret = (secret ^ (secret << 6)) & mask;
     let secret = (secret ^ (secret >> 5)) & mask;
-    let secret = (secret ^ (secret << 11)) & mask;
-    secret
+    (secret ^ (secret << 11)) & mask
 }
 
 #[cfg(test)]
