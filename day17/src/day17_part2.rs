@@ -354,6 +354,7 @@ fn solve_fast_example(a_value: usize) -> Option<usize> {
     None
 }
 
+#[allow(clippy::type_complexity)]
 fn parse(input: &str) -> Result<(RegistersType, Vec<Operation>, Vec<usize>, &str), Error> {
     let (registers_str, program_str) = input.split_once("\n\n").ok_or(miette!("Input wrong"))?;
     let registers: RegistersType = registers_str

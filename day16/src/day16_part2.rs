@@ -1,11 +1,9 @@
 use grid::{
     grid_array::GridArray,
-    grid_types::{Direction, ICoor2D, Neighborhood, Topology, UCoor2D},
+    grid_types::{Direction, Neighborhood, Topology, UCoor2D},
 };
 use itertools::Itertools;
 use pathfinding::prelude::astar_bag;
-
-
 
 //#[tracing::instrument]
 

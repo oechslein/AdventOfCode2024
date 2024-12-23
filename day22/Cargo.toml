@@ -34,5 +34,10 @@ name = "day22-bench"
 path = "benches/benchmarks.rs"
 harness = false
 
+[[bench]]
+name = "day22-bench-alloc"
+path = "benches/benchmarks_alloc.rs"
+harness = false
+
 [features]
 dhat-heap = []

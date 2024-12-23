@@ -1,27 +1,32 @@
-use rayon::prelude::*;
-
 use miette::Result;
+use rayon::prelude::*;
+use std::iter::successors;
 
 type NumberType = usize;
 
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
-    let result: usize = input
+    let input = input
         .lines()
+        .map(|line| line.parse::<NumberType>().unwrap());
+
+    let result: usize = input
         .par_bridge()
-        .map(|line| {
-            let secret = line.parse::<NumberType>().unwrap();
-            (0..2000).fold(secret, |acc, _i| all_steps(acc))
-        })
+        .map(|secret| gen_secrets(secret).nth(2000).unwrap())
         .sum();
     Ok(result.to_string())
 }
 
-fn all_steps(secret: usize) -> usize {
-    let mask = (1 << 24) - 1;
-    let secret = (secret ^ (secret << 6)) & mask;
-    let secret = (secret ^ (secret >> 5)) & mask;
-    (secret ^ (secret << 11)) & mask
+fn gen_secrets(secret: NumberType) -> impl Iterator<Item = NumberType> {
+    successors(Some(secret), |&s| Some(next_secret(s)))
+}
+
+fn next_secret(mut secret: NumberType) -> NumberType {
+    const MASK: NumberType = (1 << 24) - 1;
+    secret = (secret ^ (secret << 6)) & MASK;
+    secret = (secret ^ (secret >> 5)) & MASK;
+    secret = (secret ^ (secret << 11)) & MASK;
+    secret
 }
 
 #[cfg(test)]

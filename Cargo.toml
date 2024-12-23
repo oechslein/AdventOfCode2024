@@ -119,6 +119,7 @@ rstest_reuse = "0.7.0"
 
 # Fast & Simple Benchmarking for Rust
 divan = "0.1.17"
+
 # Statistics-driven micro-benchmarking library
 #criterion = { version = "0.5", features = ["html_reports"] }
 

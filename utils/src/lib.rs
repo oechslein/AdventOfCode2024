@@ -10,11 +10,7 @@
 #![allow(clippy::missing_panics_doc)]
 #![allow(clippy::doc_markdown)]
 
-use std::cmp::Reverse;
 use std::fmt::Debug;
-use std::fs;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -28,11 +24,6 @@ pub use spliter::{ParallelSpliterator, Spliterator};
 
 //use itertools::Itertools;
 
-/// debug println x
-pub fn printlnit<T: Debug>(x: &T) {
-    println!("{x:?}");
-}
-
 /// Allows cargo run to be called in dayXY and in root folder
 pub fn correct_folder(file_name: &str) -> PathBuf {
     let mut file_path = PathBuf::from(file_name);
@@ -42,18 +33,6 @@ pub fn correct_folder(file_name: &str) -> PathBuf {
         }
     }
     file_path
-}
-
-/// Reads a file and return its content as a string
-pub fn file_to_string(file_name: &str) -> String {
-    fs::read_to_string(correct_folder(file_name)).unwrap()
-}
-
-/// Reads a file, splits per newline and returns an iterator
-pub fn file_to_lines(file_name: &str) -> impl Iterator<Item = String> {
-    BufReader::new(File::open(correct_folder(file_name)).unwrap())
-        .lines()
-        .map_while(Result::ok)
 }
 
 /// Converts an iterator with str to an iterator with "T"
@@ -76,11 +55,6 @@ where
     str::parse::<T>(input).unwrap()
 }
 
-/// Converts item back from Reverse(item)
-pub fn unreverse<T>(reversed_item: Reverse<T>) -> T {
-    reversed_item.0
-}
-
 /// Splits given String split into chunks separated by empty lines
 pub fn split_by_empty_lines<T>(contents: &str) -> impl Iterator<Item = T> + '_
 where
@@ -97,20 +71,6 @@ where
     <T>::Err: Debug,
 {
     convert_str_iter::<T>(contents.lines())
-}
-
-/// Splits given String, trim each lines, filters empty lines and parse each line into wished type
-pub fn parse_input_items<T>(contents: &str) -> Vec<T>
-where
-    T: std::str::FromStr,
-    <T>::Err: Debug,
-{
-    contents
-        .split('\n')
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(|n| n.parse::<T>().unwrap())
-        .collect()
 }
 
 /// Runs given function, prints result and used duration
@@ -135,4 +95,53 @@ pub fn inclusive_range_always<T: PartialOrd>(from: T, to: T) -> RangeInclusive<T
     } else {
         to..=from
     }
+}
+
+/// A macro to cache the result of an expression which is multithreading safe.
+///
+/// # Arguments
+/// * `$cache_type` - The type of the cache (e.g. `FxHashMap<String, usize>`)
+/// * `$cache_init` - The initial value for the cache (e.g. `FxHashMap::default()`)
+/// * `$key` - The key (as expression) to use for caching
+/// * `$expression` - The expression to evaluate and cache
+#[macro_export]
+macro_rules! cache_it {
+    ($cache_type:ty, $cache_init:expr, $key:expr, $expression:expr) => {{
+        // LazyLock to initialize a static RwLock with the cache
+        // RwLock is used to allow concurrent reads while ensuring exclusive writes
+        static CACHE: std::sync::LazyLock<std::sync::RwLock<$cache_type>> =
+            std::sync::LazyLock::new(|| std::sync::RwLock::new($cache_init));
+
+        let key = ($key);
+        // Lock the cache in this block
+        {
+            let cache = CACHE.read().unwrap();
+            if let Some(value) = cache.get(&key) {
+                return value.clone();
+            }
+        }
+
+        let value = ($expression);
+
+        // Lock the cache in this block
+        {
+            let mut cache = CACHE.write().unwrap();
+            cache.insert(key, value.clone());
+            value
+        }
+    }};
+}
+
+/// A macro to cache the result of an expression which is multithreading safe using a FxHashMap.
+///
+/// # Arguments
+/// * `$cache_key_type` - The type of the key for the FxHashMap
+/// * `$cache_value_type` - The type of the value for the FxHashMap
+/// * `$key` - The key (as expression) to use for caching
+/// * `$expression` - The expression to evaluate and cache
+#[macro_export]
+macro_rules! cache_it_with_fxhashmap {
+    ($cache_key_type:ty, $cache_value_type:ty, $key:expr, $expression:expr) => {{
+        utils::cache_it!(fxhash::FxHashMap<$cache_key_type, $cache_value_type>, fxhash::FxHashMap::default(), $key, $expression)
+    }};
 }

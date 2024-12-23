@@ -33,5 +33,10 @@ name = "{{project-name}}-bench"
 path = "benches/benchmarks.rs"
 harness = false
 
+[[bench]]
+name = "{{project-name}}-bench-alloc"
+path = "benches/benchmarks_alloc.rs"
+harness = false
+
 [features]
 dhat-heap = []

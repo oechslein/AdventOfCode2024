@@ -3,7 +3,6 @@ use grid::grid_array::GridArray;
 use grid::grid_types::Neighborhood;
 use grid::grid_types::Topology;
 use grid::grid_types::UCoor2D;
-use itertools::Itertools;
 use pathfinding::prelude::dijkstra;
 use rayon::prelude::*;
 
@@ -64,47 +63,4 @@ pub(crate) fn solve(input: &str, min_saving_time: usize, cheat_length: usize) ->
                 .count()
         })
         .sum()
-
-    // path.iter()
-    // .tuple_combinations()
-    // .par_bridge()
-    // .map(|(cheat_start_pos, cheat_end_pos)| {
-    //     let shortcut_costs = cheat_start_pos.manhattan_distance(cheat_end_pos);
-    //     (2..=cheat_length).contains(&shortcut_costs) && {
-    //         let cheat_start_costs = coor_to_costs[cheat_end_pos];
-    //         let cheat_end_costs: usize = coor_to_costs[cheat_end_pos];
-    //         let cheat_costs: usize = cheat_end_costs + shortcut_costs;
-    //         cheat_start_costs - cheat_costs >= min_saving_time
-    //     }
-    // })
-    // .count()
-
-    // path.par_iter()
-    //     .map(|cheat_start_pos| {
-    //         let cheat_start_costs = coor_to_costs[cheat_start_pos];
-    //         get_positions_around(cheat_length, cheat_start_pos)
-    //             .filter_map(|coor| coor_to_costs.get(&coor).map(|costs| (coor, costs)))
-    //             .filter(|(_cheat_end_pos, &cheat_end_costs)| cheat_end_costs < cheat_start_costs)
-    //             .filter(|(cheat_end_pos, &cheat_end_costs)| {
-    //                 let shortcut_costs = cheat_start_pos.manhattan_distance(cheat_end_pos);
-    //                 (2..=cheat_length).contains(&shortcut_costs) && {
-    //                     let cheat_costs: usize = cheat_end_costs + shortcut_costs;
-    //                     cheat_start_costs >= min_saving_time + cheat_costs
-    //                 }
-    //             })
-    //             .count()
-    //     })
-    //     .sum()
-}
-
-fn get_positions_around(
-    cheat_length: usize,
-    cheat_start_pos: &UCoor2D,
-) -> impl Iterator<Item = UCoor2D> {
-    let map = (cheat_start_pos.x.saturating_sub(cheat_length)..=cheat_start_pos.x + cheat_length)
-        .cartesian_product(
-            cheat_start_pos.y.saturating_sub(cheat_length)..=cheat_start_pos.y + cheat_length,
-        )
-        .map(|(x, y)| UCoor2D::new(x, y));
-    map
 }

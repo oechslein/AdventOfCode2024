@@ -1,3 +1,5 @@
+use std::iter::successors;
+
 use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -17,24 +19,27 @@ pub fn process(input: &str) -> Result<String> {
         .lines()
         .map(|line| line.parse::<NumberType>().unwrap());
 
+    // Generate all possible changes maps in parallel
     let all_possible_changes_map_list: Vec<_> = input
         .par_bridge()
         .map(|secret| get_all_possible_changes_map(secret, secret_count))
         .collect();
 
-    let all_possible_changes: FxHashSet<SequenceType> = all_possible_changes_map_list
+    // Get unique sequences across all maps
+    let all_possible_changes: FxHashSet<_> = all_possible_changes_map_list
         .iter()
         .flat_map(|changes_map| changes_map.keys())
         .copied()
         .collect();
 
+    // Find sequence with maximum sum of prices
     let result = all_possible_changes
         .into_par_iter()
         .map(|possible_change| {
             all_possible_changes_map_list
                 .iter()
                 .filter_map(|map| map.get(&possible_change))
-                .map(|price| *price as usize)
+                .map(|&price| price as usize)
                 .sum::<usize>()
         })
         .max()
@@ -43,46 +48,43 @@ pub fn process(input: &str) -> Result<String> {
     Ok(result.to_string())
 }
 
-fn next_secret(mut secret: NumberType) -> NumberType {
-    const MASK: NumberType = (1 << 24) - 1;
-    secret = (secret ^ (secret << 6)) & MASK;
-    secret = (secret ^ (secret >> 5)) & MASK;
-    secret = (secret ^ (secret << 11)) & MASK;
-    secret
-}
-
 #[allow(clippy::cast_sign_loss, clippy::cast_lossless)]
 fn get_all_possible_changes_map(
     secret: NumberType,
     secret_count: usize,
 ) -> FxHashMap<SequenceType, PriceType> {
-    let prices = gen_secrets(secret, secret_count)
+    let prices = gen_secrets(secret)
+        .take(secret_count)
         .map(|secret| (secret % 10) as PriceType)
         .collect_vec();
 
-    (0..prices.len() - SEQUENCE_LENGTH)
-        .map(|index| {
-            let changes = prices[index..=index + SEQUENCE_LENGTH]
+    prices
+        .windows(SEQUENCE_LENGTH + 1)
+        .map(|window| {
+            let changes = window
                 .iter()
                 .tuple_windows()
-                .map(|(&a, &b)| ((b as NumberType) - (a as NumberType)) as ChangesType)
+                .map(|(&a, &b)| (b as NumberType - a as NumberType) as ChangesType)
                 .collect_tuple()
                 .unwrap();
 
-            let price = prices[index + SEQUENCE_LENGTH];
+            let price = *window.last().unwrap();
             (changes, price)
         })
         .rev() // make sure that the first change is in the hashmap
         .collect()
 }
 
-fn gen_secrets(secret: NumberType, secret_count: usize) -> impl Iterator<Item = NumberType> {
-    (0..secret_count).scan(secret, |acc, _i| {
-        let old_secret = *acc;
-        let new_secret = next_secret(old_secret);
-        *acc = new_secret;
-        Some(old_secret)
-    })
+fn gen_secrets(secret: NumberType) -> impl Iterator<Item = NumberType> {
+    successors(Some(secret), |&s| Some(next_secret(s)))
+}
+
+fn next_secret(mut secret: NumberType) -> NumberType {
+    const MASK: NumberType = (1 << 24) - 1;
+    secret = (secret ^ (secret << 6)) & MASK;
+    secret = (secret ^ (secret >> 5)) & MASK;
+    secret = (secret ^ (secret << 11)) & MASK;
+    secret
 }
 
 #[cfg(test)]
