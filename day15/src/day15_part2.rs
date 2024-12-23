@@ -9,8 +9,6 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-
-
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String> {
     let (mut grid, movements) = parse(input);
@@ -134,12 +132,6 @@ fn check_if_box_movement_works_vert(
     moves: &mut FxHashMap<UCoor2D, char>,
 ) -> bool {
     debug_assert!(movement_dir == Direction::North || movement_dir == Direction::South);
-
-    // if south or north could be
-    //    [][]
-    //     []
-    //      @
-    // => would move all three boxes up
 
     let (ref other_box_coor, other_box) = look_in_dir(
         grid,

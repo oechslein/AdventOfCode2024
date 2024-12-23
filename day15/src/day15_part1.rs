@@ -7,8 +7,6 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-
-
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String> {
     let (map_str, movements_str) = input.split_once("\n\n").unwrap();
@@ -126,7 +124,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
     #[test]
     fn test_input() -> miette::Result<()> {
         let input = include_str!("../input1.txt");
-        assert_eq!("", process(&input.replace('\r', ""))?);
+        assert_eq!("1526673", process(&input.replace('\r', ""))?);
         Ok(())
     }
 }
