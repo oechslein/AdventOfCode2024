@@ -8,8 +8,6 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
-
-
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String> {
     process2(input, 101, 103)
