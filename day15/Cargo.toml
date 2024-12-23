@@ -24,6 +24,7 @@ rayon.workspace = true
 fxhash.workspace = true
 
 lazy_static.workspace = true
+gif.workspace = true
 
 # nom.workspace = true
 

@@ -134,7 +134,7 @@ debug = true
 
 [profile.dhat]
 inherits = "release"
-debug = 1
+debug = true
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]

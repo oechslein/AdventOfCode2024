@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::LazyLock};
+use std::{collections::HashMap, fs::File, sync::LazyLock};
 
 use fxhash::{FxHashMap, FxHashSet};
 use grid::{
@@ -9,15 +9,54 @@ use itertools::Itertools;
 use num_traits::ToPrimitive;
 use rayon::prelude::*;
 
+use gif::{Encoder, Frame, Repeat};
+
+fn count_chars(grid: &GridArray<char>, ch: char) -> usize {
+    grid.all_cells().filter(|(_coor, &cell)| cell == ch).count()
+}
+
 //#[tracing::instrument]
 pub fn process(input: &str) -> miette::Result<String> {
     let (mut grid, movements) = parse(input);
     let mut robot_coor = get_robot_pos(&grid);
     let mut moves = FxHashMap::default();
+
+    let (mut _encoder, mut _color_map): (Encoder<File>, HashMap<char, u8>);
+    #[cfg(not(test))]
+    {
+        (_encoder, _color_map) = create_image_encoder(&grid);
+        grid.write_grid_as_frame(&mut _encoder, &_color_map);
+    }
+    let left_bracket_count = count_chars(&grid, '[');
+    let right_bracket_count = count_chars(&grid, ']');
+    let wall_count = count_chars(&grid, '#');
+    let dot_count = count_chars(&grid, '.');
+
+    if cfg!(debug_assertions) {
+        grid.println(false);
+    }
     for movement in movements {
+        if cfg!(debug_assertions) {
+            println!("{movement:?} {}", robot_coor);
+            grid.println(false);
+            debug_assert_eq!(left_bracket_count, count_chars(&grid, '['));
+            debug_assert_eq!(right_bracket_count, count_chars(&grid, ']'));
+            debug_assert_eq!(wall_count, count_chars(&grid, '#'));
+            debug_assert_eq!(dot_count, count_chars(&grid, '.'));
+        }
         if check_if_robot_movement_works(&mut grid, &robot_coor, movement, &mut moves) {
             robot_coor = add_direction(&robot_coor, movement);
+            #[cfg(not(test))]
+            {
+                grid.write_grid_as_frame(&mut _encoder, &_color_map);
+            }
         }
+    }
+    debug_assert_eq!(left_bracket_count, count_chars(&grid, '['));
+    debug_assert_eq!(right_bracket_count, count_chars(&grid, ']'));
+
+    if cfg!(debug_assertions) {
+        grid.println(false);
     }
 
     let result: usize = grid
@@ -27,6 +66,20 @@ pub fn process(input: &str) -> miette::Result<String> {
         .sum();
 
     Ok(result.to_string())
+}
+
+fn create_image_encoder(grid: &GridArray<char>) -> (Encoder<File>, HashMap<char, u8>) {
+    let colors = vec![
+        vec![0, 0, 0],
+        vec![255, 255, 255],
+        vec![160, 160, 160],
+        vec![255, 217, 50],
+        vec![255 - 15, 217 - 15, 50 - 15],
+    ];
+    let color_map: HashMap<char, u8> =
+        HashMap::from([('#', 2), ('[', 3), (']', 4), ('@', 1), ('.', 0)]);
+    let encoder = grid.create_image_encoder(r"C:\temp\part15.gif", colors);
+    (encoder, color_map)
 }
 
 fn get_robot_pos(grid: &GridArray<char>) -> UCoor2D {
@@ -118,13 +171,14 @@ fn check_if_box_movement_works(
 
     // easy if movement_dir is west or east
     if movement_dir == Direction::West || movement_dir == Direction::East {
-        check_if_box_movement_works_hor(grid, box_coor, box_cell, movement_dir, moves)
+        check_if_box_movement_works_horizontal(grid, box_coor, box_cell, movement_dir, moves)
     } else {
-        check_if_box_movement_works_vert(grid, box_coor, box_cell, movement_dir, moves)
+        debug_assert!(movement_dir == Direction::North || movement_dir == Direction::South);
+        check_if_box_movement_works_vertical(grid, box_coor, box_cell, movement_dir, moves)
     }
 }
 
-fn check_if_box_movement_works_vert(
+fn check_if_box_movement_works_vertical(
     grid: &GridArray<char>,
     box_coor: &UCoor2D,
     box_cell: char,
@@ -132,7 +186,6 @@ fn check_if_box_movement_works_vert(
     moves: &mut FxHashMap<UCoor2D, char>,
 ) -> bool {
     debug_assert!(movement_dir == Direction::North || movement_dir == Direction::South);
-
     let (ref other_box_coor, other_box) = look_in_dir(
         grid,
         box_coor,
@@ -199,7 +252,7 @@ fn check_if_box_movement_works_vert(
     true
 }
 
-fn check_if_box_movement_works_hor(
+fn check_if_box_movement_works_horizontal(
     grid: &GridArray<char>,
     box_coor: &UCoor2D,
     box_cell: char,
@@ -305,7 +358,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^";
     #[test]
     fn test_input() -> miette::Result<()> {
         let input = include_str!("../input2.txt");
-        assert_eq!("1535509", process(&input.replace('\r', ""))?);
+        assert_eq!("1544522", process(&input.replace('\r', ""))?); // 1535509
         Ok(())
     }
 }

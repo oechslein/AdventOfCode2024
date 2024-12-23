@@ -1,7 +1,10 @@
 //! Grid based on a vector
 
-use std::fmt::Display;
-use std::mem::{replace, swap};
+use std::{
+    collections::HashMap,
+    mem::{replace, swap},
+};
+use std::{fmt::Display, fs::File};
 
 use itertools::Itertools;
 
@@ -12,6 +15,8 @@ use crate::grid_types::Direction;
 
 use super::grid_iteration;
 use super::grid_types::{Neighborhood, Topology, UCoor2D, UCoor2DIndex};
+
+use gif::{Encoder, Frame, Repeat};
 
 /// `GridArray`
 #[allow(missing_docs, unused_mut)]
@@ -432,6 +437,65 @@ impl<T: Default + Clone + std::fmt::Display> GridArray<T> {
     }
 }
 
+fn get_minmax_nonempty(grid: &GridArray<char>) -> (UCoor2D, UCoor2D) {
+    grid.all_cells().filter(|(_, ch)| ch != &&'\0').fold(
+        (
+            UCoor2D::new(usize::MAX, usize::MAX),
+            UCoor2D::new(usize::MIN, usize::MIN),
+        ),
+        |(coor_min, coor_max), (coor, _)| (coor_min.min(&coor), coor_max.max(&coor)),
+    )
+}
+
+impl GridArray<char> {
+    /// Creates a GIF encoder for the specified file path.
+    ///
+    /// # Arguments
+    /// * `file_path` - The path to the file where the GIF will be saved.
+    ///
+    /// # Returns
+    /// An `Encoder` for the specified file.
+    pub fn create_image_encoder(&self, file_path: &str, colors: Vec<Vec<u8>>) -> Encoder<File> {
+        let mut encoder: Encoder<File> = Encoder::new(
+            File::create(file_path).unwrap(),
+            usize::try_into(self.width()).unwrap(),
+            usize::try_into(self.height()).unwrap(),
+            colors.into_iter().flatten().collect::<Vec<u8>>().as_slice(),
+        )
+        .unwrap();
+        encoder.set_repeat(Repeat::Finite(1)).unwrap();
+        encoder
+    }
+
+    /// Saves the grid to a file using the provided encoder
+    ///
+    /// # Arguments
+    /// * `encoder` - The encoder to write the frame to
+    /// * `grid` - The grid to save
+    #[allow(unused_variables)]
+    pub fn write_grid_as_frame(&self, encoder: &mut Encoder<File>, color_map: &HashMap<char, u8>) {
+        let (min_coor, max_coor) = get_minmax_nonempty(self);
+        let frame_width: u16 = usize::try_into(max_coor.x - min_coor.x + 1).unwrap();
+        let frame_height: u16 = usize::try_into(max_coor.y - min_coor.y + 1).unwrap();
+
+        let mut pixels: Vec<u8> = vec![0; (frame_width * frame_height) as usize];
+
+        for y in min_coor.y..=max_coor.y {
+            for x in min_coor.x..=max_coor.x {
+                let image_x = x - min_coor.x;
+                let image_y = y - min_coor.y;
+                let index = image_x + image_y * frame_width as usize;
+                let ch = self.get_unchecked(x, y);
+                (&mut pixels)[index] = *color_map.get(ch).unwrap_or(&0);
+            }
+        }
+
+        let mut frame = Frame::from_indexed_pixels(frame_width, frame_height, pixels, None);
+        frame.left = usize::try_into(min_coor.x + 10).unwrap();
+        frame.top = usize::try_into(min_coor.y).unwrap();
+        encoder.write_frame(&frame).unwrap();
+    }
+}
 #[cfg(test)]
 mod tests {
     use itertools::Itertools;
