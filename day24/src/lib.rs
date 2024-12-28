@@ -14,5 +14,6 @@
     clippy::bool_to_int_with_if
 )]
 
+mod day24_common;
 pub mod day24_part1;
 pub mod day24_part2;

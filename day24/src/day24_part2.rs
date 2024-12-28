@@ -1,141 +1,157 @@
-use fxhash::FxHashMap;
 use itertools::Itertools;
 
 use miette::Result;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
-enum Op {
-    And,
-    Or,
-    Xor,
-}
-
-#[derive(Clone, Copy)]
-struct Expr<'a> {
-    lhs: &'a str,
-    op: Op,
-    rhs: &'a str,
-}
+use crate::day24_common::{Expr, Op, Puzzle, Wire};
 
 pub fn process(input: &str) -> Result<String> {
-    let (_, mut ops) = parse(input);
+    let mut puzzle: Puzzle = input.parse().unwrap();
     let mut swaps = Vec::new();
 
-    let all_wires: Vec<&str> = ops.keys().copied().collect();
+    let all_wires: Vec<Wire> = puzzle.all_wires().collect();
     for _ in 0..4 {
-        let baseline = progress(&ops);
+        let baseline = progress(&puzzle);
         for (a, b) in all_wires.iter().tuple_combinations() {
-            swap_wires(&mut ops, a, b);
-            if progress(&ops) > baseline {
-                swaps.push([*a, *b]);
+            swap_wires(&mut puzzle, a, b);
+            let progress = progress(&puzzle);
+            if progress > baseline {
+                swaps.push([a, b]);
                 break;
             }
-            swap_wires(&mut ops, a, b);
+            swap_wires(&mut puzzle, a, b);
         }
     }
 
-    let result = swaps.into_iter().flatten().sorted().join(",");
+    let result = swaps
+        .into_iter()
+        .flatten()
+        .map(ToString::to_string)
+        .sorted()
+        .join(",");
+
+    let old_wire_values = puzzle.wire_values.clone();
+    assert!(test_if_adder(&mut puzzle));
+    assert_eq!(old_wire_values, puzzle.wire_values);
 
     Ok(result)
 }
 
-fn parse(input: &str) -> (FxHashMap<&str, bool>, FxHashMap<&str, Expr>) {
-    let (initial, connections) = input.split_once("\n\n").unwrap();
-    let wires = initial
-        .lines()
-        .map(|line| {
-            let (left, right) = line.split_once(": ").unwrap();
-            (left, right == "1")
+fn test_adder_count(puzzle: &mut Puzzle) -> u8 {
+    (0..puzzle.inputs_count())
+        .filter(|num| test_adder_output(puzzle, *num))
+        .count() as u8
+}
+fn test_if_adder(puzzle: &mut Puzzle) -> bool {
+    test_adder_count(puzzle) == puzzle.inputs_count()
+}
+
+fn test_adder_output(puzzle: &mut Puzzle, num: u8) -> bool {
+    let old_wire_values = puzzle.wire_values.clone();
+
+    let mut test_output_xyz = |x: bool, y: bool, z_0: bool, z_1: bool| {
+        for wire_num in 0..puzzle.inputs_count() {
+            if wire_num == num {
+                puzzle.wire_values.insert(Wire::InputX(wire_num), x);
+                puzzle.wire_values.insert(Wire::InputY(wire_num), y);
+            } else {
+                puzzle.wire_values.insert(Wire::InputX(wire_num), false);
+                puzzle.wire_values.insert(Wire::InputY(wire_num), false);
+            }
+        }
+
+        (0..=puzzle.inputs_count()).all(|wire_num| {
+            let wire_z = Wire::OutputZ(wire_num);
+            let wire_z_value = wire_z.value_of(puzzle);
+            if num == wire_num {
+                wire_z_value == Some(z_0)
+            } else if num + 1 == wire_num {
+                wire_z_value == Some(z_1)
+            } else {
+                wire_z_value == Some(false)
+            }
         })
-        .collect();
-    let operations = connections
-        .lines()
-        .map(|line| {
-            let (input, output) = line.split_once(" -> ").unwrap();
-            let (lhs, op, rhs) = input.split_whitespace().collect_tuple().unwrap();
-            let op = match op {
-                "AND" => Op::And,
-                "OR" => Op::Or,
-                "XOR" => Op::Xor,
-                _ => panic!("at the disco"),
-            };
-            (output, Expr { lhs, op, rhs })
-        })
-        .collect();
-    (wires, operations)
+    };
+
+    let result = [true, false]
+        .into_iter()
+        .cartesian_product([true, false])
+        .all(|(x, y)| match (x, y) {
+            (true, true) => test_output_xyz(x, y, false, true),
+            (true, false) | (false, true) => test_output_xyz(x, y, true, false),
+            (false, false) => test_output_xyz(x, y, false, false),
+        });
+
+    puzzle.wire_values.extend(old_wire_values.clone());
+    debug_assert_eq!(old_wire_values, puzzle.wire_values);
+    result
 }
 
 #[allow(unused_variables)]
-fn is_ok_z(ops: &FxHashMap<&str, Expr>, z_wire: &str, num: i32) -> bool {
-    match ops.get(z_wire) {
-        Some(Expr { lhs, op, rhs }) if num == 0 && *op == Op::Xor => check_operands(0, lhs, rhs),
+fn is_ok_z(puzzle: &Puzzle, z_wire: &Wire, num: u8) -> bool {
+    match puzzle.ops.get(z_wire) {
+        Some(Expr { lhs, op, rhs }) if num == 0 && *op == Op::Xor => check_if_inputs(0, lhs, rhs),
         Some(Expr { lhs, op, rhs }) if *op == Op::Xor => {
-            (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
-                || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num))
+            (is_ok_xor(puzzle, lhs, num) && is_ok_carry_bit(puzzle, rhs, num))
+                || (is_ok_xor(puzzle, rhs, num) && is_ok_carry_bit(puzzle, lhs, num))
         }
         _ => false,
     }
 }
 
 #[allow(unused_variables)]
-fn is_ok_xor(ops: &FxHashMap<&str, Expr>, wire: &str, num: i32) -> bool {
-    match ops.get(wire) {
-        Some(Expr { lhs, op, rhs }) if *op == Op::Xor => check_operands(num, lhs, rhs),
+fn is_ok_xor(puzzle: &Puzzle, wire: &Wire, num: u8) -> bool {
+    match puzzle.ops.get(wire) {
+        Some(Expr { lhs, op, rhs }) if *op == Op::Xor => check_if_inputs(num, lhs, rhs),
         _ => false,
     }
 }
 
 #[allow(unused_variables)]
-fn is_ok_carry_bit(ops: &FxHashMap<&str, Expr>, wire: &str, num: i32) -> bool {
-    match ops.get(wire) {
-        Some(Expr { lhs, op, rhs }) if num == 1 && *op == Op::And => check_operands(0, lhs, rhs),
+fn is_ok_carry_bit(puzzle: &Puzzle, wire: &Wire, num: u8) -> bool {
+    match puzzle.ops.get(wire) {
+        Some(Expr { lhs, op, rhs }) if num == 1 && *op == Op::And => check_if_inputs(0, lhs, rhs),
         Some(Expr { lhs, op, rhs }) if num > 1 && *op == Op::Or => {
-            (is_ok_direct_carry(ops, lhs, num - 1) && is_ok_recarry(ops, rhs, num - 1))
-                || (is_ok_direct_carry(ops, rhs, num - 1) && is_ok_recarry(ops, lhs, num - 1))
+            (is_ok_direct_carry(puzzle, lhs, num - 1) && is_ok_recarry(puzzle, rhs, num - 1))
+                || (is_ok_direct_carry(puzzle, rhs, num - 1) && is_ok_recarry(puzzle, lhs, num - 1))
         }
         _ => false,
     }
 }
 
 #[allow(unused_variables)]
-fn is_ok_direct_carry(ops: &FxHashMap<&str, Expr>, wire: &str, num: i32) -> bool {
-    match ops.get(wire) {
-        Some(Expr { lhs, op, rhs }) if *op == Op::And => check_operands(num, lhs, rhs),
+fn is_ok_direct_carry(puzzle: &Puzzle, wire: &Wire, num: u8) -> bool {
+    match puzzle.ops.get(wire) {
+        Some(Expr { lhs, op, rhs }) if *op == Op::And => check_if_inputs(num, lhs, rhs),
         _ => false,
     }
 }
 
 #[allow(unused_variables)]
-fn is_ok_recarry(ops: &FxHashMap<&str, Expr>, wire: &str, num: i32) -> bool {
-    match ops.get(wire) {
+fn is_ok_recarry(puzzle: &Puzzle, wire: &Wire, num: u8) -> bool {
+    match puzzle.ops.get(wire) {
         Some(Expr { lhs, op, rhs }) if *op != Op::And => false,
         Some(Expr { lhs, op, rhs }) => {
-            (is_ok_xor(ops, lhs, num) && is_ok_carry_bit(ops, rhs, num))
-                || (is_ok_xor(ops, rhs, num) && is_ok_carry_bit(ops, lhs, num))
+            (is_ok_xor(puzzle, lhs, num) && is_ok_carry_bit(puzzle, rhs, num))
+                || (is_ok_xor(puzzle, rhs, num) && is_ok_carry_bit(puzzle, lhs, num))
         }
         _ => false,
     }
 }
 
-fn check_operands(num: i32, lhs: &str, rhs: &str) -> bool {
-    let x_wire = make_wire('x', num);
-    let y_wire = make_wire('y', num);
-    (lhs == x_wire) && (rhs == y_wire) || (lhs == y_wire) && (rhs == x_wire)
+fn check_if_inputs(num: u8, lhs: &Wire, rhs: &Wire) -> bool {
+    debug_assert!(lhs < rhs);
+    matches!((lhs, rhs), (Wire::InputX(lhs_num), Wire::InputY(rhs_num)) if lhs_num == &num && rhs_num == &num)
 }
 
-fn progress(ops: &FxHashMap<&str, Expr>) -> i32 {
+fn progress(puzzle: &Puzzle) -> u8 {
     (0..100)
-        .find(|&idx| !is_ok_z(ops, &make_wire('z', idx), idx))
+        .find(|&idx| !is_ok_z(puzzle, &Wire::OutputZ(idx), idx))
         .unwrap()
 }
 
-fn make_wire(wire_type: char, num: i32) -> String {
-    format!("{wire_type}{num:02}")
-}
-
-fn swap_wires<'a>(map: &mut FxHashMap<&'a str, Expr<'a>>, a: &'a str, b: &'a str) {
-    let temp = map.insert(a, map[b]).unwrap();
-    map.insert(b, temp);
+fn swap_wires(puzzle: &mut Puzzle, a: &Wire, b: &Wire) {
+    let temp = puzzle.ops.insert(a.clone(), puzzle.ops[b].clone()).unwrap();
+    puzzle.ops.insert(b.clone(), temp);
 }
 
 #[cfg(test)]

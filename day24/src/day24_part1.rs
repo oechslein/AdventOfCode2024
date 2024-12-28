@@ -1,96 +1,19 @@
-use fxhash::{FxHashMap, FxHashSet};
 use itertools::Itertools;
 
 use miette::Result;
 
+use crate::day24_common::{Puzzle, Wire};
+
 //#[tracing::instrument]
 pub fn process(input: &str) -> Result<String> {
-    let (initial, connections) = input.split_once("\n\n").unwrap();
-    let mut wire_values = initial
-        .lines()
-        .map(|line| {
-            let (key, value) = line.split_once(": ").unwrap();
-            (key, value.parse::<usize>().unwrap())
-        })
-        .collect::<FxHashMap<_, _>>();
-    // println!("{:?}", wire_values);
-
-    let connections = connections
-        .lines()
-        .map(|line| {
-            let (input, output) = line.split_once(" -> ").unwrap();
-            let (input1, op, input2) = input.split(' ').collect_tuple().unwrap();
-            assert!(op == "AND" || op == "OR" || op == "XOR");
-            ((op, input1, input2), output)
-        })
-        .collect::<Vec<_>>();
-
-    let all_z_wires = connections
-        .iter()
-        .map(|(_, output)| output)
-        .chain(wire_values.keys())
-        .filter(|wire| wire.starts_with('z'))
-        .copied()
-        .collect::<FxHashSet<_>>();
-
-    while wire_values
-        .keys()
-        .filter(|wire| wire.starts_with('z'))
-        .count()
-        < all_z_wires.len()
-    {
-        // println!("all_z_wires.len(): {}", all_z_wires.len());
-        // println!(
-        //     "acount: {}",
-        //     wire_values
-        //         .keys()
-        //         .filter(|wire| wire.starts_with("z"))
-        //         .count()
-        // );
-        for ((op, input1, input2), output) in &connections {
-            if wire_values.contains_key(output) {
-                continue;
-            }
-
-            if !wire_values.contains_key(input1) || !wire_values.contains_key(input2) {
-                // println!(
-                //     "skipping: {:?} {:?} {:?} -> {:?}",
-                //     op, input1, input2, output
-                //);
-                continue;
-            }
-
-            let input1_value = wire_values[input1];
-            let input2_value = wire_values[input2];
-
-            let output_value = match *op {
-                "AND" => input1_value & input2_value,
-                "OR" => input1_value | input2_value,
-                "XOR" => input1_value ^ input2_value,
-                _ => panic!("Unknown operator: {op}"),
-            };
-
-            // println!(
-            //     "{}/{} {} {}/{} -> {}",
-            //     input1, input1_value, op, input2, input2_value, output_value
-            // );
-            wire_values.insert(output, output_value);
-        }
-    }
-
-    // let x = wire_values
-    //     .iter()
-    //     .filter(|(wire, _value)| wire.starts_with("z"))
-    //     .sorted_by_key(|(wire, _value)| *wire)
-    //     .collect_vec();
-    // println!("{:?}", x);
-
-    let result = wire_values
-        .into_iter()
-        .filter(|(wire, _value)| wire.starts_with('z'))
-        .sorted_by_key(|(wire, _value)| *wire)
-        .rev()
-        .fold(0usize, |acc, (_wire, value)| acc * 2 + value);
+    let puzzle: Puzzle = input.parse().unwrap();
+    let result = puzzle
+        .all_wires()
+        .filter(|wire| matches!(wire, Wire::OutputZ(_)))
+        .sorted_unstable_by(|a, b| b.cmp(a))
+        .fold(0usize, |acc, wire| {
+            acc * 2 + usize::from(wire.value_of(&puzzle).unwrap())
+        });
 
     Ok(result.to_string())
 }
